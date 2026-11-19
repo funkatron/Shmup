@@ -24,7 +24,7 @@ class FlightScene extends Phaser.Scene {
     const length = Math.hypot(x, y);
     if (!length) return;
 
-    const speed = 180; // Logical pixels per second.
+    const speed = 210; // Logical pixels per second.
     const distance = speed * Math.min(delta, 50) / 1000;
     this.ship.x = Phaser.Math.Clamp(this.ship.x + distance * x / length, 10, 350);
     this.ship.y = Phaser.Math.Clamp(this.ship.y + distance * y / length, 10, 470);
