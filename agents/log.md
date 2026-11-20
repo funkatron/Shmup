@@ -33,3 +33,10 @@ Added a segmented blue bridge to one scrolling canyon strip. It follows the floo
 - [x] TypeScript check and production build passed.
 - [x] Simulated 20 seconds at 60 Hz in both modes. Verified the bridge follows its strip, wraps twice offscreen, and yields identical actor and projectile states with held fire.
 - [ ] Check perceived speed and magenta-shot visibility on iPad Safari with the Lite 2. Local Chromium could not launch in this environment, so the rendered comparison is pending.
+
+## 2026-11-20 · Lite 2 controls · PR #1
+
+Start (+) toggles pause on a fresh press. The scene keeps polling the pad while gameplay and burst tweens are paused. The left stick uses eight equal direction sectors and a 30% radial dead zone. The D-pad has priority when it supplies a direction. Both use the established 210 px/s movement.
+
+- [x] TypeScript and Pages production build passed. Simulated all eight stick directions, neutral drift, held Start, frozen scene state and resume.
+- [ ] Confirm Start and left-stick mapping on the physical Lite 2 in iPad Safari.

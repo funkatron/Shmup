@@ -13,6 +13,8 @@ class FlightScene extends Phaser.Scene {
   private bridge!: Phaser.GameObjects.Image;
   private shots: Phaser.GameObjects.Image[] = [];
   private target!: Phaser.GameObjects.Image;
+  private paused = false;
+  private startWasHeld = false;
   private passTime = 0;
   private enemyShots: { sprite: Phaser.GameObjects.Image; vx: number; vy: number }[] = [];
   private fireCooldown = 0;
@@ -36,6 +38,21 @@ class FlightScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
+    const pads = navigator.getGamepads?.() ?? [];
+    const pad = Array.from(pads).find(controller => controller?.connected);
+    const startHeld = pad?.buttons[9]?.pressed ?? false;
+    if (startHeld && !this.startWasHeld) {
+      this.paused = !this.paused;
+      if (this.paused) this.tweens.pauseAll();
+      else this.tweens.resumeAll();
+    }
+    this.startWasHeld = startHeld;
+    let message = "Press a controller button";
+    if (!navigator.getGamepads) message = "Gamepad API unavailable";
+    if (pad) message = this.paused ? "Paused · Press Start to resume" : "Controller detected";
+    if (message !== this.status.textContent) this.status.textContent = message;
+    if (this.paused) return;
+
     const seconds = Math.min(delta, 50) / 1000;
     for (const mark of this.marks) {
       mark.y += 70 * seconds;
@@ -76,17 +93,21 @@ class FlightScene extends Phaser.Scene {
       });
     }
     this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
-    const pads = navigator.getGamepads?.() ?? [];
-    const pad = Array.from(pads).find(controller => controller?.connected);
-    let message = "Press a controller button";
-    if (!navigator.getGamepads) message = "Gamepad API unavailable";
-    if (pad) message = "Controller detected";
-    if (message !== this.status.textContent) this.status.textContent = message;
     if (!pad) return;
 
     const held = (index: number) => Number(pad.buttons[index]?.pressed ?? false);
-    const x = held(15) - held(14);
-    const y = held(13) - held(12);
+    let x = held(15) - held(14);
+    let y = held(13) - held(12);
+    if (!x && !y) {
+      const stickX = pad.axes[0] ?? 0;
+      const stickY = pad.axes[1] ?? 0;
+      if (Math.hypot(stickX, stickY) >= 0.30) {
+        const eighthTurn = Math.PI / 4;
+        const angle = Math.round(Math.atan2(stickY, stickX) / eighthTurn) * eighthTurn;
+        x = Math.round(Math.cos(angle));
+        y = Math.round(Math.sin(angle));
+      }
+    }
     const length = Math.hypot(x, y);
     if (length) {
       const distance = flightSpeed * seconds;

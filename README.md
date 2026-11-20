@@ -6,7 +6,8 @@ An original vertical arcade shooter built with Phaser, TypeScript, and Vite. The
 
 | Control or cue | What it does |
 |---|---|
-| D-pad | Steer in eight directions at 210 logical pixels per second. Release to stop. |
+| D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
+| Start (+) | Press once to pause. Press again to resume. |
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
 | Red wireframe ship | Crosses left to right every five seconds. A direct hit produces a gold burst. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
