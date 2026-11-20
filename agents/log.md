@@ -40,3 +40,5 @@ Start (+) toggles pause on a fresh press. The scene keeps polling the pad while 
 
 - [x] TypeScript and Pages production build passed. Simulated all eight stick directions, neutral drift, held Start, frozen scene state and resume.
 - [ ] Confirm Start and left-stick mapping on the physical Lite 2 in iPad Safari.
+
+Edward reported “Working great” after the Lite 2 controls update. Use this flight tuning as the baseline for encounter design.
