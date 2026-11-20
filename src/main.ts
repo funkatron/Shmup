@@ -13,6 +13,10 @@ class FlightScene extends Phaser.Scene {
   private bridge!: Phaser.GameObjects.Image;
   private shots: Phaser.GameObjects.Image[] = [];
   private target!: Phaser.GameObjects.Image;
+  private carrier!: Phaser.GameObjects.Image;
+  private chip!: Phaser.GameObjects.Image;
+  private carrierTime = 0;
+  private chipDrift = 0;
   private paused = false;
   private startWasHeld = false;
   private passTime = 0;
@@ -29,6 +33,9 @@ class FlightScene extends Phaser.Scene {
     this.enemyShots = [];
     this.passTime = 0;
     this.target = beam(this, -12, 125, "raider");
+    this.carrierTime = 0;
+    this.carrier = beam(this, 370, 180, "carrier");
+    this.chip = beam(this, 0, 0, "chip").setVisible(false);
     this.ship = beam(this, 180, 360, "fighter");
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     document.getElementById("build")!.textContent = [
@@ -67,19 +74,41 @@ class FlightScene extends Phaser.Scene {
     }
     this.target.x = -12 + 96 * this.passTime;
 
+    this.carrierTime += seconds;
+    if (this.carrierTime >= 10) {
+      this.carrierTime %= 10;
+      this.carrier.setVisible(true);
+    }
+    this.carrier.x = 370 - 76 * this.carrierTime;
+    if (this.chip.visible) {
+      this.chip.x += this.chipDrift * seconds;
+      this.chip.y += 68 * seconds;
+      if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
+        this.burst(this.chip.x, this.chip.y);
+        this.chip.setVisible(false);
+      } else if (this.chip.y > 490) {
+        this.chip.setVisible(false);
+      }
+    }
+
     for (let i = this.shots.length - 1; i >= 0; i--) {
       const shot = this.shots[i];
       const previousY = shot.y;
       shot.y -= 420 * seconds;
-      const hit = this.target.visible
-        && Math.abs(shot.x - this.target.x) <= 12.5
-        && previousY + 5 >= this.target.y - 7
-        && shot.y - 5 <= this.target.y + 7;
-      if (hit) {
+      const crosses = (actor: Phaser.GameObjects.Image, halfWidth: number) =>
+        actor.visible && Math.abs(shot.x - actor.x) <= halfWidth
+        && previousY + 5 >= actor.y - 7 && shot.y - 5 <= actor.y + 7;
+      const hitCarrier = crosses(this.carrier, 16);
+      const hitRaider = crosses(this.target, 12.5);
+      if (hitCarrier) {
+        this.carrier.setVisible(false);
+        this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
+        this.chipDrift = this.chip.x < 180 ? 20 : -20;
+      } else if (hitRaider) {
         this.target.setVisible(false);
         this.burst(this.target.x, this.target.y);
       }
-      if (hit || shot.y < -5) {
+      if (hitCarrier || hitRaider || shot.y < -5) {
         shot.destroy();
         this.shots.splice(i, 1);
       }

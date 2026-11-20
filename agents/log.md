@@ -46,3 +46,10 @@ Edward reported “Working great” after the Lite 2 controls update. Use this f
 ## 2026-11-20 · Automatic Pages previews
 
 Pushes to controller-flight signal the build on main, which is authorized by the existing Pages environment rule. The README links the public preview. GitHub Actions builds the current branch head and prints its commit in the game.
+
+## 2026-11-20 · Carrier pickup encounter · PR #1
+
+Added the green cargo carrier proposed after the flight test. It crosses right to left below the raider every ten seconds. A bolt releases a hollow chip that drifts down and sideways. Catching it produces a gold flash. [Movement and pickup reference](../docs/musha-aleste.md)
+
+- [x] TypeScript check and Pages build passed. Simulated held fire, chip drop, drift, pickup flash and next carrier pass.
+- [ ] Confirm the carrier and chip are distinguishable during a sweep on the iPad.
