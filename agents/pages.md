@@ -1,5 +1,3 @@
-# GitHub Pages playtest
+# Public playtest
 
-2026-11-20 · Raiden was offline. Edward approved public hosting. The manual Publish Shmup playtest workflow on main builds controller-flight with Node 24. In Settings → Pages choose GitHub Actions. In Actions run the workflow using main. After the publish job succeeds, open its environment URL on iPad and compare the displayed build ID with the game source commit. Use `?bridge=off` for the alternate canyon preview.
-
-Verified the local production build for `/Shmup/`, its bundled asset path and the embedded game commit `cddc12a`. Public deployment and iPad confirmation are pending.
+Push to controller-flight to refresh the [iPad preview](https://funkatron.github.io/Shmup/). The branch signals the Publish Shmup playtest workflow on main, the branch permitted to deploy to github-pages. It builds the current controller-flight head with Node 24. The manual workflow remains available for retries. Compare the displayed commit with the playtest branch after publication.
