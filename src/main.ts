@@ -7,7 +7,17 @@ class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Triangle;
   private status!: Phaser.GameObjects.Text;
 
+  private marks: Phaser.GameObjects.Rectangle[] = [];
+  private shots: Phaser.GameObjects.Rectangle[] = [];
+  private fireCooldown = 0;
+
   create() {
+    this.marks = Array.from({ length: 24 }, (_, i) => {
+      const x = 24 + (i % 4) * 92 + (Math.floor(i / 4) % 2) * 18;
+      const y = Math.floor(i / 4) * 80 + (i % 4) * 13;
+      return this.add.rectangle(x, y, 3, 9, 0x30465a).setDepth(-2);
+    });
+    this.shots = [];
     this.ship = this.add.triangle(180, 360, 0, 20, 10, 0, 20, 20, 0x7deaff);
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     this.add.text(8, 26, [
@@ -18,6 +28,20 @@ class FlightScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
+    const seconds = Math.min(delta, 50) / 1000;
+    for (const mark of this.marks) {
+      mark.y += 70 * seconds;
+      if (mark.y >= 485) mark.y -= 490;
+    }
+    for (let i = this.shots.length - 1; i >= 0; i--) {
+      const shot = this.shots[i];
+      shot.y -= 420 * seconds;
+      if (shot.y < -5) {
+        shot.destroy();
+        this.shots.splice(i, 1);
+      }
+    }
+    this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
     const pads = navigator.getGamepads?.() ?? [];
     const pad = Array.from(pads).find(controller => controller?.connected);
     let message = "Press a controller button";
@@ -30,11 +54,17 @@ class FlightScene extends Phaser.Scene {
     const x = held(15) - held(14);
     const y = held(13) - held(12);
     const length = Math.hypot(x, y);
-    if (!length) return;
+    if (length) {
+      const distance = flightSpeed * seconds;
+      this.ship.x = Phaser.Math.Clamp(this.ship.x + distance * x / length, 10, 350);
+      this.ship.y = Phaser.Math.Clamp(this.ship.y + distance * y / length, 10, 470);
+    }
 
-    const distance = flightSpeed * Math.min(delta, 50) / 1000;
-    this.ship.x = Phaser.Math.Clamp(this.ship.x + distance * x / length, 10, 350);
-    this.ship.y = Phaser.Math.Clamp(this.ship.y + distance * y / length, 10, 470);
+    if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
+      const shot = this.add.rectangle(this.ship.x, this.ship.y - 15, 3, 10, 0xffe891);
+      this.shots.push(shot.setDepth(-1));
+      this.fireCooldown = 0.12;
+    }
   }
 }
 
