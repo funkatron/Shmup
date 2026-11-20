@@ -34,3 +34,7 @@ If Safari cannot connect, check `curl http://127.0.0.1:4173/` on Raiden. If that
 ## Project notes
 
 [Agent log and design references](agents/log.md) · [Contributor instructions](AGENTS.md)
+
+## Movement reference
+
+The [Musha Aleste flight study](docs/musha-aleste.md) breaks down Edward’s Stage 1 reference clip and explains how scroll landmarks, forward fire and drone formations affect the feel of a sweep.

@@ -21,3 +21,7 @@ Record meaningful changes, the reason for each decision, what was verified, and 
 
 - **Atari, Star Wars Operator’s Manual (TM-225).** The self-test section’s grid pattern (Figure 2-9) and intensity test give concrete examples of colored straight lines, convergence, and intensity on the arcade display. They informed our palette and black field. [Operator’s manual](https://www.vernimark.com/arcades/wp-content/uploads/2018/04/starwars_tm225.pdf)
 - **Wells-Gardner 6100 Vector Monitor FAQ and Guide.** The discussion of X/Y deflection and Z-amplifier intensity explains how a beam traces lit segments and blanks between them. We use separate paths for disconnected lines and vary brightness between scenery and gameplay. The halo width and falloff are our visual approximation for an LCD. [Technical guide](https://www.coinopstuff.com/manuals/wells-gardner-6100-faq-and-guide.pdf)
+
+## 2026-11-19 · Musha Aleste reference study · PR #1
+
+Examined the supplied recording in timed frames, identified the Stage 1 source from the playback overlay, and checked the flight, weapons and formation rules against the manuals. The two sweep estimates above belong to the uploaded Stage 1 passage. The 9:00 link points to a separate video. The study links both recordings, both manuals, the mechanics reference and the Compile team interview. The next playtest proposed is a single dim crossing landmark at the established 210 px/s. [Research and measurement notes](../docs/musha-aleste.md)
