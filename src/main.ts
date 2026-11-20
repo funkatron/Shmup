@@ -10,6 +10,7 @@ class FlightScene extends Phaser.Scene {
   private status = document.getElementById("controller")!;
 
   private marks: Phaser.GameObjects.Image[] = [];
+  private bridge!: Phaser.GameObjects.Image;
   private shots: Phaser.GameObjects.Image[] = [];
   private target!: Phaser.GameObjects.Image;
   private passTime = 0;
@@ -20,6 +21,8 @@ class FlightScene extends Phaser.Scene {
     prepareTraces(this);
     this.marks = Array.from({ length: 5 }, (_, i) =>
       beam(this, 180, i * 128 - 64, "canyon").setDepth(-2));
+    this.bridge = beam(this, 180, this.marks[1].y, "bridge").setDepth(-2);
+    this.bridge.setVisible(new URLSearchParams(location.search).get("bridge") !== "off");
     this.shots = [];
     this.enemyShots = [];
     this.passTime = 0;
@@ -38,6 +41,7 @@ class FlightScene extends Phaser.Scene {
       mark.y += 70 * seconds;
       if (mark.y >= 544) mark.y -= 640;
     }
+    this.bridge.y = this.marks[1].y;
     const previousTime = this.passTime;
     this.passTime += seconds;
     if (this.passTime >= 5) {

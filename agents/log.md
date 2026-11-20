@@ -25,3 +25,11 @@ Record meaningful changes, the reason for each decision, what was verified, and 
 ## 2026-11-19 · Musha Aleste reference study · PR #1
 
 Examined the supplied recording in timed frames, identified the Stage 1 source from the playback overlay, and checked the flight, weapons and formation rules against the manuals. The two sweep estimates above belong to the uploaded Stage 1 passage. The 9:00 link points to a separate video. The study links both recordings, both manuals, the mechanics reference and the Compile team interview. The next playtest proposed is a single dim crossing landmark at the established 210 px/s. [Research and measurement notes](../docs/musha-aleste.md)
+
+## 2026-11-19 · Canyon bridge playtest · PR #1
+
+Added a segmented blue bridge to one scrolling canyon strip. It follows the floor at 70 px/s and returns every 640 logical pixels (about 9.1 seconds). The rails break across the center to leave dark space around the pilot. The default preview includes the bridge. Append `?bridge=off` for the comparison. [Stage 1 movement study and sources](../docs/musha-aleste.md)
+
+- [x] TypeScript check and production build passed.
+- [x] Simulated 20 seconds at 60 Hz in both modes. Verified the bridge follows its strip, wraps twice offscreen, and yields identical actor and projectile states with held fire.
+- [ ] Check perceived speed and magenta-shot visibility on iPad Safari with the Lite 2. Local Chromium could not launch in this environment, so the rendered comparison is pending.

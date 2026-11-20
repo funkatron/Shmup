@@ -50,6 +50,12 @@ export function prepareTraces(scene: Phaser.Scene) {
     [16,5,16,10], [25,8,21,12], [27,20,22,18],
     [19,27,18,22], [7,24,11,20], [5,11,10,13],
   ]);
+  // Broken rails leave dark space between the two banks and behind incoming fire.
+  traceTexture(scene, "bridge", 360, 20, "#638aca", 0.38, [
+    [40,5,75,5,90,14,108,5,143,5], [40,14,75,14,90,5,108,14,143,14],
+    [157,5,174,5], [186,5,203,5], [157,14,174,14], [186,14,203,14],
+    [217,5,252,5,270,14,285,5,317,5], [217,14,252,14,270,5,285,14,317,14],
+  ]);
   // One repeating strip of faceted canyon walls. Endpoints match at the seam.
   traceTexture(scene, "canyon", 360, 128, "#5674ff", 0.55, [
     [10,0,26,30,17,58,38,91,10,128], [39,0,50,22,36,56,56,94,39,128],

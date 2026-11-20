@@ -13,6 +13,10 @@ An original vertical arcade shooter built with Phaser, TypeScript, and Vite. The
 
 To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship gives visual feedback and play continues.
 
+### Compare the bridge
+
+A dim blue truss travels with the canyon floor about once every nine seconds. Hold fire and sweep sideways as it passes beneath the ship. Watch the gaps between your yellow bolts and the magenta incoming diamond. Use the same maneuver in both previews. [With the bridge](http://127.0.0.1:4273/) · [Without the bridge](http://127.0.0.1:4273/?bridge=off)
+
 ## Run on Raiden and play on iPad
 
 1. **Build.** Use Node 24, npm, and a checkout of the branch you want to play. From the checkout run `npm ci && npm run build`.
