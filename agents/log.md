@@ -62,3 +62,10 @@ Edward asked for geometric op-art and enjoys pursuing a pickup through a busy sc
 
 - [x] TypeScript and Pages production build passed. Simulated tile coverage across wraps, scroll rates, pause/resume, matching encounter timing with parallax disabled, three scout formations, hit persistence, respawn, and raider fire count.
 - [ ] On iPad with the Lite 2, pursue the chip during the wave and check whether the magenta diamond stays readable where the two banks overlap.
+
+## 2026-11-20 · Opposing scout flight · PR #1
+
+Edward found the parallax and five-scout pass more exciting and asked for higher intensity. Four additional scouts enter from the right 2.55 seconds into the carrier cycle. They move at 148 px/s on a lower arc, facing their direction of travel. The first flight moves at 102 px/s. Both clear around 6.2 seconds, leaving time to collect the chip and follow the raider's shot. [Previous playtest and design references](#2026-11-20--parallax-and-scout-formation--pr-1)
+
+- [x] TypeScript and Pages production build passed. Simulated overlapping flights, the gap before the next pass, hits on returning scouts, reset, pause and enemy shot count. PR review and inline-comment lists were empty.
+- [ ] Check on iPad whether switching firing lanes to catch the faster scouts still leaves time to spot the incoming diamond.

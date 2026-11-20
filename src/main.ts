@@ -12,7 +12,7 @@ class FlightScene extends Phaser.Scene {
   private marks: Phaser.GameObjects.Image[] = [];
   private farBanks: Phaser.GameObjects.Image[] = [];
   private farScroll = 0;
-  private scouts: { sprite: Phaser.GameObjects.Image; down: boolean }[] = [];
+  private scouts: { entry: number; fromRight: boolean; sprite: Phaser.GameObjects.Image; down: boolean }[] = [];
   private bridge!: Phaser.GameObjects.Image;
   private shots: Phaser.GameObjects.Image[] = [];
   private target!: Phaser.GameObjects.Image;
@@ -32,9 +32,12 @@ class FlightScene extends Phaser.Scene {
     this.farScroll = 0;
     this.farBanks = parallax ? Array.from({ length: 4 }, (_, i) =>
       beam(this, 180, i * 192 - 96, "folds").setDepth(-3)) : [];
-    this.scouts = Array.from({ length: 5 }, () => ({
-      sprite: beam(this, -16, 0, "scout").setVisible(false), down: false,
-    }));
+    const flight = (count: number, fromRight: boolean, start: number, spacing: number) =>
+      Array.from({ length: count }, (_, i) => ({
+        entry: start + spacing * i, fromRight, down: false,
+        sprite: beam(this, 0, 0, "scout").setFlipX(fromRight).setVisible(false),
+      }));
+    this.scouts = [...flight(4, true, 2.55, 0.29), ...flight(5, false, 0.85, 0.38)];
     this.marks = Array.from({ length: 5 }, (_, i) =>
       beam(this, 180, i * 128 - 64, "canyon").setDepth(-2));
     this.bridge = beam(this, 180, this.marks[1].y, "bridge").setDepth(-2);
@@ -93,11 +96,14 @@ class FlightScene extends Phaser.Scene {
       for (const scout of this.scouts) scout.down = false;
     }
     this.carrier.x = 370 - 76 * this.carrierTime;
-    this.scouts.forEach(({ sprite, down }, i) => {
-      const age = this.carrierTime - 0.85 - i * 0.38;
-      const x = -16 + 102 * age;
-      sprite.setVisible(!down && age >= 0 && x <= 376);
-      if (sprite.visible) sprite.setPosition(x, 211 + 42 * Math.sin(Math.PI * x / 360));
+    this.scouts.forEach(({ sprite, down, entry, fromRight }) => {
+      const age = this.carrierTime - entry;
+      const progress = -16 + (fromRight ? 148 : 102) * age;
+      sprite.setVisible(!down && age >= 0 && progress <= 376);
+      if (!sprite.visible) return;
+      const arc = Math.sin(Math.PI * progress / 360);
+      if (fromRight) sprite.setPosition(360 - progress, 300 - 24 * arc);
+      else sprite.setPosition(progress, 211 + 42 * arc);
     });
     if (this.chip.visible) {
       this.chip.x += this.chipDrift * seconds;

@@ -12,7 +12,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Start (+) | Press once to pause. Press again to resume. |
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
 | Red wireframe ship | Crosses left to right every five seconds. A direct hit produces a gold burst. |
-| Orange scouts | Five enter from the left in a shallow arc every ten seconds. Each takes one hit. |
+| Orange scouts | Five arc in from the left. Four faster scouts skim in from the right below them during the chip chase. Each takes one hit. Both flights clear before the next carrier pass. |
 | Green cargo carrier | Enters from the right at the start and every ten seconds. Shoot it once, then fly through the drifting green chip for a gold flash. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
