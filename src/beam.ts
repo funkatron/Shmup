@@ -42,6 +42,9 @@ export function prepareTraces(scene: Phaser.Scene) {
     [6,6,12,9,17,6,22,9,28,6,25,15,20,13,17,19,14,13,9,15,6,6],
     [12,9,17,14,22,9], [15,10,19,10],
   ]);
+  traceTexture(scene, "scout", 24, 18, "#ff9961", 0.85, [
+    [3,3,20,9,3,15,8,9,3,3], [8,9,15,9],
+  ]);
   traceTexture(scene, "carrier", 40, 24, "#92ff60", 1, [
     [3,12,9,5,30,5,37,12,30,19,9,19,3,12],
     [10,8,10,16], [30,8,30,16], [16,8,24,8,24,16,16,16,16,8],
@@ -58,6 +61,14 @@ export function prepareTraces(scene: Phaser.Scene) {
     [16,5,16,10], [25,8,21,12], [27,20,22,18],
     [19,27,18,22], [7,24,11,20], [5,11,10,13],
   ]);
+  // Taper the spacing at the folds. Endpoints match one tile below.
+  const folds: Trace[] = [];
+  for (let rib = 0; rib < 6; rib++) {
+    const x = 5 + rib * 12;
+    folds.push([x,0, 46 + rib * 6,54, 18 + rib * 15,103, x - 16,151, x,192]);
+    folds.push([360-x,0, 376-x,41, 342-rib*15,89, 314-rib*6,138, 360-x,192]);
+  }
+  traceTexture(scene, "folds", 360, 192, "#8269ce", 0.32, folds);
   // Broken rails leave dark space between the two banks and behind incoming fire.
   traceTexture(scene, "bridge", 360, 20, "#638aca", 0.38, [
     [40,5,75,5,90,14,108,5,143,5], [40,14,75,14,90,5,108,14,143,14],

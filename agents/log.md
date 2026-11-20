@@ -55,3 +55,10 @@ Added the green cargo carrier proposed after the flight test. It crosses right t
 - [ ] Confirm the carrier and chip are distinguishable during a sweep on the iPad.
 
 **iPad playtest feedback on `bfb7a6c`.** Edward interpreted the chip as a power-up and aggressively pursued it. The expected reward gave him a reason to leave his firing lane. Edward could track the magenta shot and take evasive action during pursuit. He enjoys the chaos of a target-rich screen, and can lose track when it gets busy. For a first density test, try a short flight of shootable targets during the chip chase with the same raider firing pattern. Check whether he can still see a way out.
+
+## 2026-11-20 · Parallax and scout formation · PR #1
+
+Edward asked for geometric op-art and enjoys pursuing a pickup through a busy screen. Six dim violet traces on each bank change spacing at each fold. They scroll at 24 px/s behind the 70 px/s canyon. The asymmetry and open center give the player a place to reacquire the cyan ship. The five orange scouts follow one shallow arc, staggered by 0.38 seconds. Only the raider fires. See the [vector display references](#2026-11-19--flight-and-vector-display--pr-1) and [flight study](../docs/musha-aleste.md).
+
+- [x] TypeScript and Pages production build passed. Simulated tile coverage across wraps, scroll rates, pause/resume, matching encounter timing with parallax disabled, three scout formations, hit persistence, respawn, and raider fire count.
+- [ ] On iPad with the Lite 2, pursue the chip during the wave and check whether the magenta diamond stays readable where the two banks overlap.

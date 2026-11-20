@@ -10,6 +10,9 @@ class FlightScene extends Phaser.Scene {
   private status = document.getElementById("controller")!;
 
   private marks: Phaser.GameObjects.Image[] = [];
+  private farBanks: Phaser.GameObjects.Image[] = [];
+  private farScroll = 0;
+  private scouts: { sprite: Phaser.GameObjects.Image; down: boolean }[] = [];
   private bridge!: Phaser.GameObjects.Image;
   private shots: Phaser.GameObjects.Image[] = [];
   private target!: Phaser.GameObjects.Image;
@@ -25,6 +28,13 @@ class FlightScene extends Phaser.Scene {
 
   create() {
     prepareTraces(this);
+    const parallax = new URLSearchParams(location.search).get("parallax") !== "off";
+    this.farScroll = 0;
+    this.farBanks = parallax ? Array.from({ length: 4 }, (_, i) =>
+      beam(this, 180, i * 192 - 96, "folds").setDepth(-3)) : [];
+    this.scouts = Array.from({ length: 5 }, () => ({
+      sprite: beam(this, -16, 0, "scout").setVisible(false), down: false,
+    }));
     this.marks = Array.from({ length: 5 }, (_, i) =>
       beam(this, 180, i * 128 - 64, "canyon").setDepth(-2));
     this.bridge = beam(this, 180, this.marks[1].y, "bridge").setDepth(-2);
@@ -61,6 +71,8 @@ class FlightScene extends Phaser.Scene {
     if (this.paused) return;
 
     const seconds = Math.min(delta, 50) / 1000;
+    this.farScroll = (this.farScroll + 24 * seconds) % 192;
+    this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
     for (const mark of this.marks) {
       mark.y += 70 * seconds;
       if (mark.y >= 544) mark.y -= 640;
@@ -78,8 +90,15 @@ class FlightScene extends Phaser.Scene {
     if (this.carrierTime >= 10) {
       this.carrierTime %= 10;
       this.carrier.setVisible(true);
+      for (const scout of this.scouts) scout.down = false;
     }
     this.carrier.x = 370 - 76 * this.carrierTime;
+    this.scouts.forEach(({ sprite, down }, i) => {
+      const age = this.carrierTime - 0.85 - i * 0.38;
+      const x = -16 + 102 * age;
+      sprite.setVisible(!down && age >= 0 && x <= 376);
+      if (sprite.visible) sprite.setPosition(x, 211 + 42 * Math.sin(Math.PI * x / 360));
+    });
     if (this.chip.visible) {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
@@ -100,7 +119,12 @@ class FlightScene extends Phaser.Scene {
         && previousY + 5 >= actor.y - 7 && shot.y - 5 <= actor.y + 7;
       const hitCarrier = crosses(this.carrier, 16);
       const hitRaider = crosses(this.target, 12.5);
-      if (hitCarrier) {
+      const scout = this.scouts.find(({ sprite }) => crosses(sprite, 9));
+      if (scout) {
+        scout.down = true;
+        scout.sprite.setVisible(false);
+        this.burst(scout.sprite.x, scout.sprite.y);
+      } else if (hitCarrier) {
         this.carrier.setVisible(false);
         this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
         this.chipDrift = this.chip.x < 180 ? 20 : -20;
@@ -108,7 +132,7 @@ class FlightScene extends Phaser.Scene {
         this.target.setVisible(false);
         this.burst(this.target.x, this.target.y);
       }
-      if (hitCarrier || hitRaider || shot.y < -5) {
+      if (scout || hitCarrier || hitRaider || shot.y < -5) {
         shot.destroy();
         this.shots.splice(i, 1);
       }

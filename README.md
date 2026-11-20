@@ -12,10 +12,15 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Start (+) | Press once to pause. Press again to resume. |
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
 | Red wireframe ship | Crosses left to right every five seconds. A direct hit produces a gold burst. |
+| Orange scouts | Five enter from the left in a shallow arc every ten seconds. Each takes one hit. |
 | Green cargo carrier | Enters from the right at the start and every ten seconds. Shoot it once, then fly through the drifting green chip for a gold flash. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
 To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship gives visual feedback and play continues.
+
+### Compare the parallax
+
+Violet folds scroll at 24 logical pixels per second beneath the blue canyon walls at 70. Try following the green chip while the scouts cross. Can you glance up at a target and find your ship and the incoming diamond again? Both previews run the same encounter. [With parallax](https://funkatron.github.io/Shmup/) · [Without the distant folds](https://funkatron.github.io/Shmup/?parallax=off)
 
 ### Compare the bridge
 
