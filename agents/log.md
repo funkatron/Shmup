@@ -53,3 +53,5 @@ Added the green cargo carrier proposed after the flight test. It crosses right t
 
 - [x] TypeScript check and Pages build passed. Simulated held fire, chip drop, drift, pickup flash and next carrier pass.
 - [ ] Confirm the carrier and chip are distinguishable during a sweep on the iPad.
+
+**iPad playtest feedback on `bfb7a6c`.** Edward interpreted the chip as a power-up and aggressively pursued it. The expected reward gave him a reason to leave his firing lane. Whether the incoming shot remained easy to track during pursuit is still open.
