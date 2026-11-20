@@ -9,6 +9,8 @@ class FlightScene extends Phaser.Scene {
 
   private marks: Phaser.GameObjects.Rectangle[] = [];
   private shots: Phaser.GameObjects.Rectangle[] = [];
+  private target!: Phaser.GameObjects.Rectangle;
+  private passTime = 0;
   private fireCooldown = 0;
 
   create() {
@@ -18,6 +20,9 @@ class FlightScene extends Phaser.Scene {
       return this.add.rectangle(x, y, 3, 9, 0x30465a).setDepth(-2);
     });
     this.shots = [];
+    this.passTime = 0;
+    this.target = this.add.rectangle(-12, 125, 22, 14, 0xe67060)
+      .setStrokeStyle(2, 0xffc9aa);
     this.ship = this.add.triangle(180, 360, 0, 20, 10, 0, 20, 20, 0x7deaff);
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     this.add.text(8, 26, [
@@ -33,10 +38,31 @@ class FlightScene extends Phaser.Scene {
       mark.y += 70 * seconds;
       if (mark.y >= 485) mark.y -= 490;
     }
+    this.passTime += seconds;
+    if (this.passTime >= 5) {
+      this.passTime %= 5;
+      this.target.setVisible(true);
+    }
+    this.target.x = -12 + 96 * this.passTime;
+
     for (let i = this.shots.length - 1; i >= 0; i--) {
       const shot = this.shots[i];
+      const previousY = shot.y;
       shot.y -= 420 * seconds;
-      if (shot.y < -5) {
+      const hit = this.target.visible
+        && Math.abs(shot.x - this.target.x) <= (shot.width + this.target.width) / 2
+        && previousY + shot.height / 2 >= this.target.y - this.target.height / 2
+        && shot.y - shot.height / 2 <= this.target.y + this.target.height / 2;
+      if (hit) {
+        this.target.setVisible(false);
+        const flash = this.add.circle(this.target.x, this.target.y, 7)
+          .setStrokeStyle(2, 0xffe891);
+        this.tweens.add({
+          targets: flash, scale: 2.4, alpha: 0, duration: 180,
+          onComplete: () => flash.destroy(),
+        });
+      }
+      if (hit || shot.y < -5) {
         shot.destroy();
         this.shots.splice(i, 1);
       }
