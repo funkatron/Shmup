@@ -2,6 +2,8 @@ import Phaser from "phaser";
 
 import { prepareTraces, beam } from "./beam";
 
+import { ImpactAudio, fragments, type Hull } from "./impact";
+
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const flightSpeed = 210; // Logical pixels per second.
 
@@ -22,7 +24,10 @@ class FlightScene extends Phaser.Scene {
   private chipDrift = 0;
   private paused = false;
   private startWasHeld = false;
-  private passTime = 0;
+  private mirrored = false;
+  private ledges: Phaser.GameObjects.Image[] = [];
+  private ledgeScroll = 0;
+  private impacts = new ImpactAudio();
   private enemyShots: { sprite: Phaser.GameObjects.Image; vx: number; vy: number }[] = [];
   private fireCooldown = 0;
 
@@ -44,7 +49,11 @@ class FlightScene extends Phaser.Scene {
     this.bridge.setVisible(new URLSearchParams(location.search).get("bridge") !== "off");
     this.shots = [];
     this.enemyShots = [];
-    this.passTime = 0;
+    this.mirrored = false;
+    this.ledgeScroll = 0;
+    this.ledges = parallax ? Array.from({ length: 4 }, (_, i) =>
+      beam(this, 180, i * 192 - 96, "ledges").setDepth(-1.5)) : [];
+    document.getElementById("sound")!.onclick = () => this.impacts.toggle();
     this.target = beam(this, -12, 125, "raider");
     this.carrierTime = 0;
     this.carrier = beam(this, 370, 180, "carrier");
@@ -74,36 +83,37 @@ class FlightScene extends Phaser.Scene {
     if (this.paused) return;
 
     const seconds = Math.min(delta, 50) / 1000;
-    this.farScroll = (this.farScroll + 24 * seconds) % 192;
+    this.farScroll = (this.farScroll + 18 * seconds) % 192;
     this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
+    this.ledgeScroll = (this.ledgeScroll + 148 * seconds) % 192;
+    this.ledges.forEach((ledge, i) => { ledge.y = i * 192 - 96 + this.ledgeScroll; });
     for (const mark of this.marks) {
       mark.y += 70 * seconds;
       if (mark.y >= 544) mark.y -= 640;
     }
     this.bridge.y = this.marks[1].y;
-    const previousTime = this.passTime;
-    this.passTime += seconds;
-    if (this.passTime >= 5) {
-      this.passTime %= 5;
-      this.target.setVisible(true);
-    }
-    this.target.x = -12 + 96 * this.passTime;
-
+    const previousTime = this.carrierTime % 5;
     this.carrierTime += seconds;
     if (this.carrierTime >= 10) {
       this.carrierTime %= 10;
+      this.mirrored = !this.mirrored;
       this.carrier.setVisible(true);
       for (const scout of this.scouts) scout.down = false;
     }
-    this.carrier.x = 370 - 76 * this.carrierTime;
+    const passTime = this.carrierTime % 5;
+    if (passTime < previousTime) this.target.setVisible(true);
+    const fieldX = (x: number) => this.mirrored ? 360 - x : x;
+    this.target.x = fieldX(-12 + 96 * passTime);
+    this.carrier.x = fieldX(370 - 76 * this.carrierTime);
     this.scouts.forEach(({ sprite, down, entry, fromRight }) => {
       const age = this.carrierTime - entry;
       const progress = -16 + (fromRight ? 148 : 102) * age;
       sprite.setVisible(!down && age >= 0 && progress <= 376);
       if (!sprite.visible) return;
       const arc = Math.sin(Math.PI * progress / 360);
-      if (fromRight) sprite.setPosition(360 - progress, 300 - 24 * arc);
-      else sprite.setPosition(progress, 211 + 42 * arc);
+      sprite.setFlipX(fromRight !== this.mirrored);
+      sprite.setPosition(fieldX(fromRight ? 360 - progress : progress),
+        fromRight ? 300 - 24 * arc : 211 + 42 * arc);
     });
     if (this.chip.visible) {
       this.chip.x += this.chipDrift * seconds;
@@ -129,14 +139,15 @@ class FlightScene extends Phaser.Scene {
       if (scout) {
         scout.down = true;
         scout.sprite.setVisible(false);
-        this.burst(scout.sprite.x, scout.sprite.y);
+        this.explode(scout.sprite.x, scout.sprite.y, "scout");
       } else if (hitCarrier) {
         this.carrier.setVisible(false);
+        this.explode(this.carrier.x, this.carrier.y, "carrier");
         this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
         this.chipDrift = this.chip.x < 180 ? 20 : -20;
       } else if (hitRaider) {
         this.target.setVisible(false);
-        this.burst(this.target.x, this.target.y);
+        this.explode(this.target.x, this.target.y, "raider");
       }
       if (scout || hitCarrier || hitRaider || shot.y < -5) {
         shot.destroy();
@@ -144,7 +155,7 @@ class FlightScene extends Phaser.Scene {
       }
     }
     this.updateEnemyShots(seconds);
-    if (this.target.visible && previousTime < 1.0 && this.passTime >= 1.0) {
+    if (this.target.visible && previousTime < 1.0 && passTime >= 1.0) {
       const angle = Math.atan2(this.ship.y - this.target.y, this.ship.x - this.target.x);
       this.enemyShots.push({
         sprite: beam(this, this.target.x, this.target.y, "incoming"),
@@ -178,6 +189,30 @@ class FlightScene extends Phaser.Scene {
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.shots.push(shot.setDepth(-1));
       this.fireCooldown = 0.12;
+    }
+  }
+
+  private explode(x: number, y: number, hull: Hull) {
+    this.impacts.play(hull);
+    this.burst(x, y);
+    const count = fragments(hull);
+    for (const side of [-1, 1]) {
+      const fringe = beam(this, x, y, side < 0 ? "fringe-red" : "fringe-blue").setDepth(-0.6);
+      this.tweens.add({
+        targets: fringe, x: x + side * count * 0.7, scale: 0.34 + count * 0.06,
+        alpha: 0, duration: 75 + count * 11, onComplete: () => fringe.destroy(),
+      });
+    }
+    const offset = Math.random() * Math.PI * 2;
+    for (let i = 0; i < count; i++) {
+      const angle = offset + i * 2 * Math.PI / count;
+      const reach = (3 + count * 4) * (0.75 + Math.random() * 0.4);
+      const shard = beam(this, x, y, "shard").setRotation(angle).setDepth(-0.5);
+      this.tweens.add({
+        targets: shard, x: x + Math.cos(angle) * reach, y: y + Math.sin(angle) * reach,
+        rotation: angle + 1.5, alpha: 0, ease: "Quad.easeOut", duration: 130 + count * 35,
+        onComplete: () => shard.destroy(),
+      });
     }
   }
 

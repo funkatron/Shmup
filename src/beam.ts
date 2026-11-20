@@ -69,6 +69,17 @@ export function prepareTraces(scene: Phaser.Scene) {
     folds.push([360-x,0, 376-x,41, 342-rib*15,89, 314-rib*6,138, 360-x,192]);
   }
   traceTexture(scene, "folds", 360, 192, "#8269ce", 0.32, folds);
+  // Offset two broken traces to suggest momentary phosphor misconvergence.
+  const fringe = [[4,12,7,6,13,4], [20,7,23,13,20,19], [15,23,9,21]];
+  traceTexture(scene, "fringe-red", 28, 28, "#ff703d", 0.75, fringe);
+  traceTexture(scene, "fringe-blue", 28, 28, "#689eff", 0.75, fringe);
+  traceTexture(scene, "shard", 14, 10, "#ffae50", 0.9, [[2,7,7,3,11,4]]);
+  // Sparse projecting shelves pass closest to the viewer along the outer banks.
+  traceTexture(scene, "ledges", 360, 192, "#7293f0", 0.63, [
+    [0,26,26,38,49,65,22,57,0,38], [0,38,22,66,49,73,49,65], [22,57,22,66],
+    [360,112,335,120,319,143,344,136,360,124],
+    [319,143,319,150,344,143,360,130], [344,136,344,143],
+  ]);
   // Broken rails leave dark space between the two banks and behind incoming fire.
   traceTexture(scene, "bridge", 360, 20, "#638aca", 0.38, [
     [40,5,75,5,90,14,108,5,143,5], [40,14,75,14,90,5,108,14,143,14],

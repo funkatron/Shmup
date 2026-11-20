@@ -69,3 +69,14 @@ Edward found the parallax and five-scout pass more exciting and asked for higher
 
 - [x] TypeScript and Pages production build passed. Simulated overlapping flights, the gap before the next pass, hits on returning scouts, reset, pause and enemy shot count. PR review and inline-comment lists were empty.
 - [ ] Check on iPad whether switching firing lanes to catch the faster scouts still leaves time to spot the incoming diamond.
+
+## 2026-11-20 · Mirrored encounters, deeper terrain and impact feedback · PR #1
+
+Edward found the incoming diamond harder to track on build 194d24b and enjoyed that tension. Alternate ten-second encounters reflect all enemy paths. A slow floor (18 px/s), mid-distance walls (70), and projecting shelves (148) strengthen the sense of height along the edges.
+
+The supplied 15.87-second Stage 1 recording contains stereo audio. In its 8–12 s passage, the 60–240 Hz band peaks roughly 9 dB above its median near 9.1 s (mono mix, Hann-windowed FFT). Music, fire and impacts overlap. This is a mixed-track measurement. The synth settings are original tuning choices. [Clip timing and source](../docs/musha-aleste.md) · [VICIOGAME gameplay index](https://viciogameblog.com/2022/06/24/genesis_musha_aleste_complete_gameplay/)
+
+A falling pitch and noisy attack feed a 5-bit, 8 kHz sample-and-hold mixed with an uncrushed body. Hull size determines pitch, decay and fragment count. Paired red-orange and blue broken line traces separate briefly around the wreck, behind gameplay actors. The chip and player hit retain their distinct existing feedback.
+
+- [x] TypeScript and Pages production build passed. Simulated original, mirrored and returning passes, hull-specific effects, both color traces, tween cleanup, finite audio buffers with quiet endings, and mute.
+- [ ] Check sound unlock and bass audibility on iPad speakers. Follow the green chip through a carrier breakup to assess the local color split.
