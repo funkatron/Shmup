@@ -13,6 +13,8 @@ Record meaningful changes, the reason for each decision, what was verified, and 
 | `d80388a` | Added wireframe canyon walls, traced ships, a tight glow, and a magenta shot aimed once per pass. The TypeScript check and production build passed. An offscreen render and simulated inputs covered the visual composition, fixed aim, repeat firing, and player-hit feedback. |
 | Documentation | Added setup and controls for players, contributor guidance, and this log. [PR #1](https://github.com/funkatron/Shmup/pull/1) |
 
+**Visual feedback.** Edward’s first impression of the current presentation was “This looks pretty good.” Keep the vector treatment as the visual baseline.
+
 **Next device check.** On iPad Safari, confirm that the magenta diamond is easy to follow against the canyon and that the ship’s bright core remains distinct through a diagonal turn. Record Edward’s feedback with the displayed build ID.
 
 ### Vector-display references
