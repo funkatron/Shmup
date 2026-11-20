@@ -1,43 +1,44 @@
 import Phaser from "phaser";
 
+import { prepareTraces, beam } from "./beam";
+
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const flightSpeed = 210; // Logical pixels per second.
 
 class FlightScene extends Phaser.Scene {
-  private ship!: Phaser.GameObjects.Triangle;
-  private status!: Phaser.GameObjects.Text;
+  private ship!: Phaser.GameObjects.Image;
+  private status = document.getElementById("controller")!;
 
-  private marks: Phaser.GameObjects.Rectangle[] = [];
-  private shots: Phaser.GameObjects.Rectangle[] = [];
-  private target!: Phaser.GameObjects.Rectangle;
+  private marks: Phaser.GameObjects.Image[] = [];
+  private shots: Phaser.GameObjects.Image[] = [];
+  private target!: Phaser.GameObjects.Image;
   private passTime = 0;
+  private enemyShots: { sprite: Phaser.GameObjects.Image; vx: number; vy: number }[] = [];
   private fireCooldown = 0;
 
   create() {
-    this.marks = Array.from({ length: 24 }, (_, i) => {
-      const x = 24 + (i % 4) * 92 + (Math.floor(i / 4) % 2) * 18;
-      const y = Math.floor(i / 4) * 80 + (i % 4) * 13;
-      return this.add.rectangle(x, y, 3, 9, 0x30465a).setDepth(-2);
-    });
+    prepareTraces(this);
+    this.marks = Array.from({ length: 5 }, (_, i) =>
+      beam(this, 180, i * 128 - 64, "canyon").setDepth(-2));
     this.shots = [];
+    this.enemyShots = [];
     this.passTime = 0;
-    this.target = this.add.rectangle(-12, 125, 22, 14, 0xe67060)
-      .setStrokeStyle(2, 0xffc9aa);
-    this.ship = this.add.triangle(180, 360, 0, 20, 10, 0, 20, 20, 0x7deaff);
+    this.target = beam(this, -12, 125, "raider");
+    this.ship = beam(this, 180, 360, "fighter");
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
-    this.add.text(8, 26, [
+    document.getElementById("build")!.textContent = [
       `v${version}  ·  ${commit}  ·  ${flightSpeed} px/s`,
       builtAt,
-    ], { fontSize: "12px", color: "#b9d6de" });
-    this.status = this.add.text(8, 8, "", { fontSize: "12px", color: "#b9d6de" });
+    ].join("\n");
   }
 
   update(_time: number, delta: number) {
     const seconds = Math.min(delta, 50) / 1000;
     for (const mark of this.marks) {
       mark.y += 70 * seconds;
-      if (mark.y >= 485) mark.y -= 490;
+      if (mark.y >= 544) mark.y -= 640;
     }
+    const previousTime = this.passTime;
     this.passTime += seconds;
     if (this.passTime >= 5) {
       this.passTime %= 5;
@@ -50,22 +51,25 @@ class FlightScene extends Phaser.Scene {
       const previousY = shot.y;
       shot.y -= 420 * seconds;
       const hit = this.target.visible
-        && Math.abs(shot.x - this.target.x) <= (shot.width + this.target.width) / 2
-        && previousY + shot.height / 2 >= this.target.y - this.target.height / 2
-        && shot.y - shot.height / 2 <= this.target.y + this.target.height / 2;
+        && Math.abs(shot.x - this.target.x) <= 12.5
+        && previousY + 5 >= this.target.y - 7
+        && shot.y - 5 <= this.target.y + 7;
       if (hit) {
         this.target.setVisible(false);
-        const flash = this.add.circle(this.target.x, this.target.y, 7)
-          .setStrokeStyle(2, 0xffe891);
-        this.tweens.add({
-          targets: flash, scale: 2.4, alpha: 0, duration: 180,
-          onComplete: () => flash.destroy(),
-        });
+        this.burst(this.target.x, this.target.y);
       }
       if (hit || shot.y < -5) {
         shot.destroy();
         this.shots.splice(i, 1);
       }
+    }
+    this.updateEnemyShots(seconds);
+    if (this.target.visible && previousTime < 1.0 && this.passTime >= 1.0) {
+      const angle = Math.atan2(this.ship.y - this.target.y, this.ship.x - this.target.x);
+      this.enemyShots.push({
+        sprite: beam(this, this.target.x, this.target.y, "incoming"),
+        vx: 105 * Math.cos(angle), vy: 105 * Math.sin(angle),
+      });
     }
     this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
     const pads = navigator.getGamepads?.() ?? [];
@@ -73,7 +77,7 @@ class FlightScene extends Phaser.Scene {
     let message = "Press a controller button";
     if (!navigator.getGamepads) message = "Gamepad API unavailable";
     if (pad) message = "Controller detected";
-    if (message !== this.status.text) this.status.setText(message);
+    if (message !== this.status.textContent) this.status.textContent = message;
     if (!pad) return;
 
     const held = (index: number) => Number(pad.buttons[index]?.pressed ?? false);
@@ -87,18 +91,41 @@ class FlightScene extends Phaser.Scene {
     }
 
     if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
-      const shot = this.add.rectangle(this.ship.x, this.ship.y - 15, 3, 10, 0xffe891);
+      const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.shots.push(shot.setDepth(-1));
       this.fireCooldown = 0.12;
+    }
+  }
+
+  private burst(x: number, y: number) {
+    const flash = beam(this, x, y, "burst");
+    this.tweens.add({
+      targets: flash, scale: 0.85, alpha: 0, duration: 220,
+      onComplete: () => flash.destroy(),
+    });
+  }
+
+  private updateEnemyShots(seconds: number) {
+    for (let i = this.enemyShots.length - 1; i >= 0; i--) {
+      const { sprite, vx, vy } = this.enemyShots[i];
+      sprite.x += vx * seconds;
+      sprite.y += vy * seconds;
+      const hit = Math.hypot(sprite.x - this.ship.x, sprite.y - this.ship.y) <= 8;
+      if (hit) this.burst(this.ship.x, this.ship.y);
+      if (hit || sprite.x < -9 || sprite.x > 369 || sprite.y < -9 || sprite.y > 489) {
+        sprite.destroy();
+        this.enemyShots.splice(i, 1);
+      }
     }
   }
 }
 
 new Phaser.Game({
   type: Phaser.AUTO,
+  parent: "flight",
   width: 360,
   height: 480,
-  backgroundColor: "#101827",
+  backgroundColor: "#000000",
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: FlightScene
 });
