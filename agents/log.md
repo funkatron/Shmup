@@ -15,7 +15,7 @@ Record meaningful changes, the reason for each decision, what was verified, and 
 
 **Visual feedback.** Edward’s first impression of the current presentation was “This looks pretty good.” Keep the vector treatment as the visual baseline.
 
-**Next device check.** On iPad Safari, confirm that the magenta diamond is easy to follow against the canyon and that the ship’s bright core remains distinct through a diagonal turn. Record Edward’s feedback with the displayed build ID.
+**iPad visibility check.** Edward confirmed he could see both the crossing target and its incoming magenta projectile against the canyon. The ship’s bright core during a diagonal turn remains an open playtest question.
 
 ### Vector-display references
 
