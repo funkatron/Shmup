@@ -1,0 +1,12 @@
+name: Preview branch updated
+on:
+  push:
+    branches: [controller-flight]
+
+permissions: {}
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Requesting the controller-flight Pages build."

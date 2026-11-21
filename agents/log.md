@@ -1,0 +1,96 @@
+# Agent log
+
+Record meaningful changes, the reason for each decision, what was verified, and what still needs a playtest. Dates below use the project owner's local date. Each build displays its own UTC timestamp.
+
+## 2026-11-19 · Flight and vector display · PR #1
+
+| Build | Decision and evidence |
+|---|---|
+| `c7aca8a` → `860c286` | Established a 360 × 480 playfield. Edward loaded the build on iPad through Termius and confirmed the Lite 2 was detected. The first 180 px/s D-pad pass felt a little slow. |
+| `77fa5ff` → `053221b` | Raised speed to 210 px/s. Added version, commit, build time, and speed above the playfield so feedback can identify the running build. |
+| `c80da60` | Added scrolling ground marks and held forward fire. Two horizontal sweeps in Edward’s reference clip gave an estimated 185–190 px/s when scaled to our playfield. Edward liked 210 px/s with the visual cues present. Keep that setting as the playtest baseline. [M.U.S.H.A. movement reference at 9:00](https://youtu.be/mYg2Bt4L1go?t=540) |
+| `9813309` | Added one repeatable crossing target. Simulated checks covered hits, misses, and respawn. Edward reported the iPad test worked well. |
+| `d80388a` | Added wireframe canyon walls, traced ships, a tight glow, and a magenta shot aimed once per pass. The TypeScript check and production build passed. An offscreen render and simulated inputs covered the visual composition, fixed aim, repeat firing, and player-hit feedback. |
+| Documentation | Added setup and controls for players, contributor guidance, and this log. [PR #1](https://github.com/funkatron/Shmup/pull/1) |
+
+**Visual feedback.** Edward’s first impression of the current presentation was “This looks pretty good.” Keep the vector treatment as the visual baseline.
+
+**iPad visibility check.** Edward confirmed he could see both the crossing target and its incoming magenta projectile against the canyon. The ship’s bright core during a diagonal turn remains an open playtest question.
+
+### Vector-display references
+
+- **Atari, Star Wars Operator’s Manual (TM-225).** The self-test section’s grid pattern (Figure 2-9) and intensity test give concrete examples of colored straight lines, convergence, and intensity on the arcade display. They informed our palette and black field. [Operator’s manual](https://www.vernimark.com/arcades/wp-content/uploads/2018/04/starwars_tm225.pdf)
+- **Wells-Gardner 6100 Vector Monitor FAQ and Guide.** The discussion of X/Y deflection and Z-amplifier intensity explains how a beam traces lit segments and blanks between them. We use separate paths for disconnected lines and vary brightness between scenery and gameplay. The halo width and falloff are our visual approximation for an LCD. [Technical guide](https://www.coinopstuff.com/manuals/wells-gardner-6100-faq-and-guide.pdf)
+
+## 2026-11-19 · Musha Aleste reference study · PR #1
+
+Examined the supplied recording in timed frames, identified the Stage 1 source from the playback overlay, and checked the flight, weapons and formation rules against the manuals. The two sweep estimates above belong to the uploaded Stage 1 passage. The 9:00 link points to a separate video. The study links both recordings, both manuals, the mechanics reference and the Compile team interview. The next playtest proposed is a single dim crossing landmark at the established 210 px/s. [Research and measurement notes](../docs/musha-aleste.md)
+
+## 2026-11-19 · Canyon bridge playtest · PR #1
+
+Added a segmented blue bridge to one scrolling canyon strip. It follows the floor at 70 px/s and returns every 640 logical pixels (about 9.1 seconds). The rails break across the center to leave dark space around the pilot. The default preview includes the bridge. Append `?bridge=off` for the comparison. [Stage 1 movement study and sources](../docs/musha-aleste.md)
+
+- [x] TypeScript check and production build passed.
+- [x] Simulated 20 seconds at 60 Hz in both modes. Verified the bridge follows its strip, wraps twice offscreen, and yields identical actor and projectile states with held fire.
+- [ ] Check perceived speed and magenta-shot visibility on iPad Safari with the Lite 2. Local Chromium could not launch in this environment, so the rendered comparison is pending.
+
+## 2026-11-20 · Lite 2 controls · PR #1
+
+Start (+) toggles pause on a fresh press. The scene keeps polling the pad while gameplay and burst tweens are paused. The left stick uses eight equal direction sectors and a 30% radial dead zone. The D-pad has priority when it supplies a direction. Both use the established 210 px/s movement.
+
+- [x] TypeScript and Pages production build passed. Simulated all eight stick directions, neutral drift, held Start, frozen scene state and resume.
+- [ ] Confirm Start and left-stick mapping on the physical Lite 2 in iPad Safari.
+
+Edward reported “Working great” after the Lite 2 controls update. Use this flight tuning as the baseline for encounter design.
+
+## 2026-11-20 · Automatic Pages previews
+
+Pushes to controller-flight signal the build on main, which is authorized by the existing Pages environment rule. The README links the public preview. GitHub Actions builds the current branch head and prints its commit in the game.
+
+## 2026-11-20 · Carrier pickup encounter · PR #1
+
+Added the green cargo carrier proposed after the flight test. It crosses right to left below the raider every ten seconds. A bolt releases a hollow chip that drifts down and sideways. Catching it produces a gold flash. [Movement and pickup reference](../docs/musha-aleste.md)
+
+- [x] TypeScript check and Pages build passed. Simulated held fire, chip drop, drift, pickup flash and next carrier pass.
+- [ ] Confirm the carrier and chip are distinguishable during a sweep on the iPad.
+
+**iPad playtest feedback on `bfb7a6c`.** Edward interpreted the chip as a power-up and aggressively pursued it. The expected reward gave him a reason to leave his firing lane. Edward could track the magenta shot and take evasive action during pursuit. He enjoys the chaos of a target-rich screen, and can lose track when it gets busy. For a first density test, try a short flight of shootable targets during the chip chase with the same raider firing pattern. Check whether he can still see a way out.
+
+## 2026-11-20 · Parallax and scout formation · PR #1
+
+Edward asked for geometric op-art and enjoys pursuing a pickup through a busy screen. Six dim violet traces on each bank change spacing at each fold. They scroll at 24 px/s behind the 70 px/s canyon. The asymmetry and open center give the player a place to reacquire the cyan ship. The five orange scouts follow one shallow arc, staggered by 0.38 seconds. Only the raider fires. See the [vector display references](#2026-11-19--flight-and-vector-display--pr-1) and [flight study](../docs/musha-aleste.md).
+
+- [x] TypeScript and Pages production build passed. Simulated tile coverage across wraps, scroll rates, pause/resume, matching encounter timing with parallax disabled, three scout formations, hit persistence, respawn, and raider fire count.
+- [ ] On iPad with the Lite 2, pursue the chip during the wave and check whether the magenta diamond stays readable where the two banks overlap.
+
+## 2026-11-20 · Opposing scout flight · PR #1
+
+Edward found the parallax and five-scout pass more exciting and asked for higher intensity. Four additional scouts enter from the right 2.55 seconds into the carrier cycle. They move at 148 px/s on a lower arc, facing their direction of travel. The first flight moves at 102 px/s. Both clear around 6.2 seconds, leaving time to collect the chip and follow the raider's shot. [Previous playtest and design references](#2026-11-20--parallax-and-scout-formation--pr-1)
+
+- [x] TypeScript and Pages production build passed. Simulated overlapping flights, the gap before the next pass, hits on returning scouts, reset, pause and enemy shot count. PR review and inline-comment lists were empty.
+- [ ] Check on iPad whether switching firing lanes to catch the faster scouts still leaves time to spot the incoming diamond.
+
+## 2026-11-20 · Mirrored encounters, deeper terrain and impact feedback · PR #1
+
+Edward found the incoming diamond harder to track on build 194d24b and enjoyed that tension. Alternate ten-second encounters reflect all enemy paths. A slow floor (18 px/s), mid-distance walls (70), and projecting shelves (148) strengthen the sense of height along the edges.
+
+The supplied 15.87-second Stage 1 recording contains stereo audio. In its 8–12 s passage, the 60–240 Hz band peaks roughly 9 dB above its median near 9.1 s (mono mix, Hann-windowed FFT). Music, fire and impacts overlap. This is a mixed-track measurement. The synth settings are original tuning choices. [Clip timing and source](../docs/musha-aleste.md) · [VICIOGAME gameplay index](https://viciogameblog.com/2022/06/24/genesis_musha_aleste_complete_gameplay/)
+
+A falling pitch and noisy attack feed a 5-bit, 8 kHz sample-and-hold mixed with an uncrushed body. Hull size determines pitch, decay and fragment count. Paired red-orange and blue broken line traces separate briefly around the wreck, behind gameplay actors. The chip and player hit retain their distinct existing feedback.
+
+- [x] TypeScript and Pages production build passed. Simulated original, mirrored and returning passes, hull-specific effects, both color traces, tween cleanup, finite audio buffers with quiet endings, and mute.
+- [ ] Check sound unlock and bass audibility on iPad speakers. Follow the green chip through a carrier breakup to assess the local color split.
+
+## 2026-11-20 · Explosion timbre · PR #1
+
+Edward liked the low thud on e898ab7 and described the attack as a balloon pop. Shortened the pitch sweep, gave the crushed noise its own low-mid rumble, and added a quieter second knock that scales with hull size. The carrier now lasts 390 ms with its second attack about 94 ms in. [Original impact reference](../docs/musha-aleste.md)
+
+- [x] TypeScript and Pages build passed. Generated all three hull buffers at 44.1 and 48 kHz and checked sample peaks, finite output, and quiet endings.
+- [ ] Listen on iPad for hull breakup during a carrier kill and for distinct scout hits during sustained fire.
+
+## 2026-11-20 · Explosion reverb · PR #1
+
+Edward liked the carrier's low thud and wanted a longer explosive decay across the three hulls. Re-examined the mixed audio from the [Stage 1 reference clip](../docs/musha-aleste.md). Music and effects overlap, so the decay settings are playtest choices. Four damped feedback paths build a diffuse return after the initial 30 ms. Scout, raider and carrier decay settings are 0.48, 0.78 and 1.25 seconds.
+
+- [x] TypeScript and Pages build passed. Rendered all hulls at 44.1 and 48 kHz, verified the original attack, signal after the dry hit, taper to silence and peak headroom in each individual sample. Rendered a matched carrier A/B with the same noise seed and gain.
+- [ ] Listen for the tail on iPad, especially when multiple scouts break apart.
