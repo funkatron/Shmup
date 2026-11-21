@@ -101,3 +101,10 @@ Edward tentatively identified 011–013 in his numbered M.U.S.H.A. sound-test ca
 
 - [x] Built the Pages bundle, type-checked, and rendered all hulls at 44.1 and 48 kHz. Checked individual peaks and quiet endings. The audition uses game gain and includes space for the tails.
 - [ ] Check closely spaced scout kills and the carrier tail on iPad speakers.
+
+## 2026-11-21 · Low-mid explosion body · PR #1
+
+Edward wanted more low-mid weight in the previous audition. Applied a broad 300 Hz bell before the reverb and output saturation. The scout gets 3 dB of EQ gain, the raider 6 dB and the carrier 8 dB. At matched full-buffer RMS, a fixed-seed render gained 2.2, 3.7 and 4.3 dB respectively in the 200–400 Hz band.
+
+- [x] TypeScript and Pages build passed. Checked individual buffers at 44.1 and 48 kHz for finite samples and headroom. Rendered same-seed old/new pairs at matched RMS.
+- [ ] Audition overlapping explosions on iPad speakers.

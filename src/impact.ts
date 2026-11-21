@@ -1,9 +1,9 @@
 // Generate one impact per hull and cache it for successive hits.
 export type Hull = "scout" | "raider" | "carrier";
 const profiles = {
-  scout: { start: 108, end: 82, seconds: 0.17, decay: 0.25, fragments: 3 },
-  raider: { start: 88, end: 66, seconds: 0.65, decay: 0.62, fragments: 5 },
-  carrier: { start: 70, end: 52, seconds: 0.85, decay: 1.05, fragments: 7 },
+  scout: { start: 108, end: 82, seconds: 0.17, decay: 0.25, lowMidDb: 3, fragments: 3 },
+  raider: { start: 88, end: 66, seconds: 0.65, decay: 0.62, lowMidDb: 6, fragments: 5 },
+  carrier: { start: 70, end: 52, seconds: 0.85, decay: 1.05, lowMidDb: 8, fragments: 7 },
 };
 // Start time, strength, and damping time of successive hull fractures (seconds).
 const fractures: Record<Hull, [number, number, number][]> = {
@@ -52,8 +52,29 @@ function synth(context: AudioContext, hull: Hull) {
     samples[i] += held * 0.43 * attack * Math.min(1, (seconds - t) / 0.035);
 
   }
+  boostLowMids(samples.subarray(0, dryLength), rate, profiles[hull].lowMidDb);
   reverberate(samples, dryLength, rate, decay);
   return buffer;
+}
+
+// A broad 300 Hz bell adds body to the fractures and their reflections.
+function boostLowMids(samples: Float32Array, rate: number, gainDb: number) {
+  const omega = 2 * Math.PI * 300 / rate;
+  const gain = 10 ** (gainDb / 40);
+  const alpha = Math.sin(omega) / (2 * 0.85);
+  const a0 = 1 + alpha / gain;
+  const b0 = (1 + alpha * gain) / a0;
+  const b1 = -2 * Math.cos(omega) / a0;
+  const b2 = (1 - alpha * gain) / a0;
+  const a2 = (1 - alpha / gain) / a0;
+  let z1 = 0, z2 = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const input = samples[i];
+    const output = b0 * input + z1;
+    z1 = b1 * (input - output) + z2;
+    z2 = b2 * input - a2 * output;
+    samples[i] = output;
+  }
 }
 
 // Four unequal reflection paths scatter the hit back into the canyon.
