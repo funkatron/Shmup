@@ -80,3 +80,10 @@ A falling pitch and noisy attack feed a 5-bit, 8 kHz sample-and-hold mixed with 
 
 - [x] TypeScript and Pages production build passed. Simulated original, mirrored and returning passes, hull-specific effects, both color traces, tween cleanup, finite audio buffers with quiet endings, and mute.
 - [ ] Check sound unlock and bass audibility on iPad speakers. Follow the green chip through a carrier breakup to assess the local color split.
+
+## 2026-11-20 · Explosion timbre · PR #1
+
+Edward liked the low thud on e898ab7 and described the attack as a balloon pop. Shortened the pitch sweep, gave the crushed noise its own low-mid rumble, and added a quieter second knock that scales with hull size. The carrier now lasts 390 ms with its second attack about 94 ms in. [Original impact reference](../docs/musha-aleste.md)
+
+- [x] TypeScript and Pages build passed. Generated all three hull buffers at 44.1 and 48 kHz and checked sample peaks, finite output, and quiet endings.
+- [ ] Listen on iPad for hull breakup during a carrier kill and for distinct scout hits during sustained fire.
