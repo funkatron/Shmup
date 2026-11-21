@@ -94,3 +94,10 @@ Edward liked the carrier's low thud and wanted a longer explosive decay across t
 
 - [x] TypeScript and Pages build passed. Rendered all hulls at 44.1 and 48 kHz, verified the original attack, signal after the dry hit, taper to silence and peak headroom in each individual sample. Rendered a matched carrier A/B with the same noise seed and gain.
 - [ ] Listen for the tail on iPad, especially when multiple scouts break apart.
+
+## 2026-11-21 · Ship breakup references · PR #1
+
+Edward tentatively identified 011–013 in his numbered M.U.S.H.A. sound-test capture as ship explosions. The first isolated plays begin at 0:34.87 (011), 0:36.80 (012), and 0:38.20 (013). Their measured active spans are about 0.87, 0.18 and 0.88 seconds. The scout draws on 012's short bright strike, the raider on 011's uneven surges, and the carrier on 013's bass body. The declining high-frequency content of 029 at 1:45.31 informed the darkening noise return. The reference informed synthesis only. Each ship uses fresh synthesized noise on first use and the same cached buffer for subsequent hits.
+
+- [x] Built the Pages bundle, type-checked, and rendered all hulls at 44.1 and 48 kHz. Checked individual peaks and quiet endings. The audition uses game gain and includes space for the tails.
+- [ ] Check closely spaced scout kills and the carrier tail on iPad speakers.

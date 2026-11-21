@@ -1,9 +1,15 @@
 // Generate one impact per hull and cache it for successive hits.
 export type Hull = "scout" | "raider" | "carrier";
 const profiles = {
-  scout: { start: 108, end: 82, seconds: 0.17, decay: 0.48, fragments: 3 },
-  raider: { start: 88, end: 66, seconds: 0.25, decay: 0.78, fragments: 5 },
-  carrier: { start: 70, end: 52, seconds: 0.39, decay: 1.25, fragments: 7 },
+  scout: { start: 108, end: 82, seconds: 0.17, decay: 0.25, fragments: 3 },
+  raider: { start: 88, end: 66, seconds: 0.65, decay: 0.62, fragments: 5 },
+  carrier: { start: 70, end: 52, seconds: 0.85, decay: 1.05, fragments: 7 },
+};
+// Start time, strength, and damping time of successive hull fractures (seconds).
+const fractures: Record<Hull, [number, number, number][]> = {
+  scout: [[0, 1, 0.046]],
+  raider: [[0, 1, 0.09], [0.071, 0.86, 0.11], [0.19, 0.72, 0.10], [0.34, 0.46, 0.11]],
+  carrier: [[0, 1, 0.12], [0.095, 0.94, 0.15], [0.23, 0.82, 0.14], [0.39, 0.59, 0.14], [0.56, 0.40, 0.13]],
 };
 export function fragments(hull: Hull) { return profiles[hull].fragments; }
 
@@ -23,22 +29,28 @@ function synth(context: AudioContext, hull: Hull) {
     phase += 2 * Math.PI * (end + (start - end) * Math.exp(-8 * progress)) / rate;
 
     const body = Math.tanh(2 * Math.sin(phase) + 0.4 * Math.sin(2 * phase));
-    // A second, rougher knock lands as the first fracture subsides.
-    const knockTime = t - seconds * 0.24;
-    const knock = knockTime < 0 ? 0 :
-      Math.min(1, knockTime / 0.006) * Math.exp(-knockTime / (seconds * 0.17));
-    const envelope = Math.min(1, t / 0.002) * (1 - progress) ** 2;
+    const attack = Math.min(1, t / 0.002);
+    const envelope = attack * (1 - progress) ** 2;
     // Hold at 8 kHz without an anti-alias filter, quantize to 32 levels,
     // then apply the envelope so the last step decays cleanly to silence.
     if (i >= nextLatch) {
       const noise = Math.random() * 2 - 1;
-      rubble += 0.18 * (noise - rubble);
-      const raw = Math.tanh(2.8 * rubble + 0.55 * noise * Math.exp(-9 * progress));
+      const brightness = (hull === "scout" ? 0.88 : 0.50) * Math.exp(-3.6 * progress);
+      rubble += (0.085 + brightness) * (noise - rubble);
+      const raw = Math.tanh(2.8 * rubble + brightness * noise);
       held = Math.round((raw + 1) * 15.5) / 15.5 - 1;
+      let gain = 0;
+      for (const [onset, strength, damping] of fractures[hull]) {
+        const age = t - onset;
+        if (age < 0) break;
+        gain += strength * Math.min(1, age / 0.005) * Math.exp(-age / damping);
+      }
+      held *= gain;
       nextLatch += rate / 8000;
     }
-    const aftershock = Math.sin(2 * Math.PI * end * 0.86 * knockTime);
-    samples[i] = envelope * (0.21 * body + 0.31 * held + knock * (0.19 * aftershock + 0.16 * held));
+    samples[i] = envelope * body * (hull === "scout" ? 0.065 : 0.19);
+    samples[i] += held * 0.43 * attack * Math.min(1, (seconds - t) / 0.035);
+
   }
   reverberate(samples, dryLength, rate, decay);
   return buffer;
@@ -66,7 +78,8 @@ function reverberate(samples: Float32Array, dryLength: number, rate: number, dec
       if (++path.index === path.line.length) path.index = 0;
     }
     const fade = Math.min(1, (samples.length - 1 - i) / (rate * 0.015));
-    samples[i] += 0.34 * (paths[0].damped + paths[1].damped - paths[2].damped + paths[3].damped) * fade;
+    const wet = 0.34 * (paths[0].damped + paths[1].damped - paths[2].damped + paths[3].damped) * fade;
+    samples[i] = 0.76 * Math.tanh(samples[i] + wet);
   }
 }
 
