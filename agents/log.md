@@ -108,3 +108,10 @@ Edward wanted more low-mid weight in the previous audition. Applied a broad 300 
 
 - [x] TypeScript and Pages build passed. Checked individual buffers at 44.1 and 48 kHz for finite samples and headroom. Rendered same-seed old/new pairs at matched RMS.
 - [ ] Audition overlapping explosions on iPad speakers.
+
+## 2026-11-21 · Scout breakup and diffuse tails · PR #1
+
+Edward heard a typewriter in the scout and metallic ringing in the reverb. The scout now has three overlapping noise bursts, a lower body and slight per-hit speed variation. Replaced the four recirculating delays across all hulls with a diffuse filtered-noise tail driven by the dry signal’s energy. The 300 Hz hull EQ remains in place.
+
+- [x] TypeScript and Pages build passed. Rendered old/new scouts, five successive kills, and isolated larger hulls through the playback path at 44.1 and 48 kHz. The overlapping audition stayed below full scale.
+- [ ] Check the new scout in a wave and the carrier decay on iPad speakers.

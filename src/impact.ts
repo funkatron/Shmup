@@ -1,13 +1,13 @@
 // Generate one impact per hull and cache it for successive hits.
 export type Hull = "scout" | "raider" | "carrier";
 const profiles = {
-  scout: { start: 108, end: 82, seconds: 0.17, decay: 0.25, lowMidDb: 3, fragments: 3 },
+  scout: { start: 91, end: 63, seconds: 0.32, decay: 0.40, lowMidDb: 3, fragments: 3 },
   raider: { start: 88, end: 66, seconds: 0.65, decay: 0.62, lowMidDb: 6, fragments: 5 },
   carrier: { start: 70, end: 52, seconds: 0.85, decay: 1.05, lowMidDb: 8, fragments: 7 },
 };
 // Start time, strength, and damping time of successive hull fractures (seconds).
 const fractures: Record<Hull, [number, number, number][]> = {
-  scout: [[0, 1, 0.046]],
+  scout: [[0, 0.88, 0.088], [0.034, 0.61, 0.096], [0.091, 0.32, 0.085]],
   raider: [[0, 1, 0.09], [0.071, 0.86, 0.11], [0.19, 0.72, 0.10], [0.34, 0.46, 0.11]],
   carrier: [[0, 1, 0.12], [0.095, 0.94, 0.15], [0.23, 0.82, 0.14], [0.39, 0.59, 0.14], [0.56, 0.40, 0.13]],
 };
@@ -35,7 +35,7 @@ function synth(context: AudioContext, hull: Hull) {
     // then apply the envelope so the last step decays cleanly to silence.
     if (i >= nextLatch) {
       const noise = Math.random() * 2 - 1;
-      const brightness = (hull === "scout" ? 0.88 : 0.50) * Math.exp(-3.6 * progress);
+      const brightness = (hull === "scout" ? 0.43 : 0.50) * Math.exp(-3.6 * progress);
       rubble += (0.085 + brightness) * (noise - rubble);
       const raw = Math.tanh(2.8 * rubble + brightness * noise);
       held = Math.round((raw + 1) * 15.5) / 15.5 - 1;
@@ -48,7 +48,7 @@ function synth(context: AudioContext, hull: Hull) {
       held *= gain;
       nextLatch += rate / 8000;
     }
-    samples[i] = envelope * body * (hull === "scout" ? 0.065 : 0.19);
+    samples[i] = envelope * body * (hull === "scout" ? 0.14 : 0.19);
     samples[i] += held * 0.43 * attack * Math.min(1, (seconds - t) / 0.035);
 
   }
@@ -77,29 +77,27 @@ function boostLowMids(samples: Float32Array, rate: number, gainDb: number) {
   }
 }
 
-// Four unequal reflection paths scatter the hit back into the canyon.
-// Bake the return once per hull. The earliest reflection arrives after the attack.
+// Approximate a dense late field with filtered noise driven by the hull's
+// smoothed energy. No short delay line recirculates a pitched resonance.
 function reverberate(samples: Float32Array, dryLength: number, rate: number, decay: number) {
-  const paths = [0.0297, 0.0371, 0.0437, 0.0531].map(seconds => ({
-    line: new Float32Array(Math.round(rate * seconds)),
-    feedback: 10 ** (-3 * seconds / decay),
-    index: 0, damped: 0,
-  }));
-  const damping = 1 - Math.exp(-2 * Math.PI * 2600 / rate);
+  const attack = 1 - Math.exp(-1 / (0.024 * rate));
+  const release = Math.exp(-Math.log(1e6) / (decay * rate));
+  const damping = 1 - Math.exp(-2 * Math.PI * 780 / rate);
+  const highPass = 1 - Math.exp(-2 * Math.PI * 95 / rate);
+  const noiseGain = Math.sqrt(3 * (2 - damping) / damping);
+  const preDelay = Math.round(0.018 * rate);
+  const dry = samples.slice(0, dryLength);
+  let energy = 0;
+  let diffuse = 0;
+  let bass = 0;
   for (let i = 0; i < samples.length; i++) {
-    const dry = i < dryLength ? samples[i] : 0;
-    let sum = 0;
-    for (const path of paths) {
-      path.damped += damping * (path.line[path.index] - path.damped);
-      sum += path.damped;
-    }
-    // Householder reflection mixes the four returns without adding energy.
-    for (const path of paths) {
-      path.line[path.index] = dry + path.feedback * (path.damped - 0.5 * sum);
-      if (++path.index === path.line.length) path.index = 0;
-    }
+    const input = dry[i - preDelay] ?? 0;
+    const power = input * input;
+    energy = power > energy ? energy + attack * (power - energy) : energy * release;
+    diffuse += damping * (Math.random() * 2 - 1 - diffuse);
+    bass += highPass * (diffuse - bass);
     const fade = Math.min(1, (samples.length - 1 - i) / (rate * 0.015));
-    const wet = 0.34 * (paths[0].damped + paths[1].damped - paths[2].damped + paths[3].damped) * fade;
+    const wet = 0.45 * Math.sqrt(energy) * noiseGain * (diffuse - bass) * fade;
     samples[i] = 0.76 * Math.tanh(samples[i] + wet);
   }
 }
@@ -137,6 +135,7 @@ export class ImpactAudio {
     this.buffers.set(hull, buffer);
     const hit = context.createBufferSource();
     hit.buffer = buffer;
+    if (hull === "scout") hit.playbackRate.value = 0.94 + Math.random() * 0.12;
     hit.connect(context.destination);
     hit.onended = () => hit.disconnect();
     hit.start();
