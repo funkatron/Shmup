@@ -115,3 +115,10 @@ Edward heard a typewriter in the scout and metallic ringing in the reverb. The s
 
 - [x] TypeScript and Pages build passed. Rendered old/new scouts, five successive kills, and isolated larger hulls through the playback path at 44.1 and 48 kHz. The overlapping audition stayed below full scale.
 - [ ] Check the new scout in a wave and the carrier decay on iPad speakers.
+
+## 2026-11-21 · Octave and delay audition · PR #1
+
+Added opt-in half-speed and quarter-speed playback of the existing hull sounds. An optional low-passed echo taps the impact at 145 and 325 ms, at 24% and 10% gain. Delays are scaled in the cached buffer so octave changes preserve echo timing. The scout retains its small per-hit speed variation.
+
+- [x] TypeScript and Pages build passed. Rendered all three ships at both pitches through the playback path with matched noise seeds for the echo comparison. Checked finite, unclipped audition output.
+- [ ] Compare scout overlap and carrier weight on iPad speakers.

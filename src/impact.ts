@@ -102,7 +102,29 @@ function reverberate(samples: Float32Array, dryLength: number, rate: number, dec
   }
 }
 
+// Delay times are in playback seconds, so both octave settings get the same echo.
+function addEcho(context: AudioContext, source: AudioBuffer, speed: number) {
+  const dry = source.getChannelData(0);
+  const rate = context.sampleRate * speed;
+  const first = Math.round(0.145 * rate);
+  const second = Math.round(0.325 * rate);
+  const result = context.createBuffer(1, dry.length + second, context.sampleRate);
+  const out = result.getChannelData(0);
+  out.set(dry);
+  const damping = 1 - Math.exp(-2 * Math.PI * 850 / rate);
+  let dark = 0;
+  for (let i = 0; i < dry.length; i++) {
+    dark += damping * (dry[i] - dark);
+    out[i + first] += 0.24 * dark;
+    out[i + second] += 0.10 * dark;
+  }
+  return result;
+}
+
 export class ImpactAudio {
+  private options = new URLSearchParams(location.search);
+  private speed = this.options.get("pitch") === "-24" ? 0.25 :
+    this.options.get("pitch") === "-12" ? 0.5 : 1;
   private context?: AudioContext;
   private buffers = new Map<Hull, AudioBuffer>();
   private enabled = false;
@@ -131,11 +153,15 @@ export class ImpactAudio {
   play(hull: Hull) {
     const context = this.context;
     if (!this.enabled || context?.state !== "running") return;
-    const buffer = this.buffers.get(hull) ?? synth(context, hull);
-    this.buffers.set(hull, buffer);
+    let buffer = this.buffers.get(hull);
+    if (!buffer) {
+      buffer = synth(context, hull);
+      if (this.options.get("echo") === "on") buffer = addEcho(context, buffer, this.speed);
+      this.buffers.set(hull, buffer);
+    }
     const hit = context.createBufferSource();
     hit.buffer = buffer;
-    if (hull === "scout") hit.playbackRate.value = 0.94 + Math.random() * 0.12;
+    hit.playbackRate.value = this.speed * (hull === "scout" ? 0.94 + Math.random() * 0.12 : 1);
     hit.connect(context.destination);
     hit.onended = () => hit.disconnect();
     hit.start();

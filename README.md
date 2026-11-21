@@ -53,3 +53,7 @@ If Safari cannot connect, check `curl http://127.0.0.1:4173/` on Raiden. If that
 ## Movement reference
 
 The [Musha Aleste flight study](docs/musha-aleste.md) breaks down Edward’s Stage 1 reference clip and explains how scroll landmarks, forward fire and drone formations affect the feel of a sweep.
+
+### Compare pitched explosions
+
+Open the preview with `?pitch=-12` for half-speed impacts or `?pitch=-24` for quarter speed. Append `&echo=on` to add two dark repeats. The normal play URL uses the original pitch and diffuse tail.
