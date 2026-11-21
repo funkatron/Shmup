@@ -87,3 +87,10 @@ Edward liked the low thud on e898ab7 and described the attack as a balloon pop. 
 
 - [x] TypeScript and Pages build passed. Generated all three hull buffers at 44.1 and 48 kHz and checked sample peaks, finite output, and quiet endings.
 - [ ] Listen on iPad for hull breakup during a carrier kill and for distinct scout hits during sustained fire.
+
+## 2026-11-20 · Explosion reverb · PR #1
+
+Edward liked the carrier's low thud and wanted a longer explosive decay across the three hulls. Re-examined the mixed audio from the [Stage 1 reference clip](../docs/musha-aleste.md). Music and effects overlap, so the decay settings are playtest choices. Four damped feedback paths build a diffuse return after the initial 30 ms. Scout, raider and carrier decay settings are 0.48, 0.78 and 1.25 seconds.
+
+- [x] TypeScript and Pages build passed. Rendered all hulls at 44.1 and 48 kHz, verified the original attack, signal after the dry hit, taper to silence and peak headroom in each individual sample. Rendered a matched carrier A/B with the same noise seed and gain.
+- [ ] Listen for the tail on iPad, especially when multiple scouts break apart.
