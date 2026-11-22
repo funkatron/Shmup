@@ -13,7 +13,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |
 | Orange scouts | Five arc in from the left. Four faster scouts skim in from the right below them during the chip chase. Each takes one hit. Both flights clear before the next carrier pass. |
-| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Shoot it once, then fly through the drifting green chip to equip a cyan wing pod on your right. Hold fire for two parallel bolts per volley. Further chips flash gold and the pod stays equipped. |
+| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Shoot it once, then fly through the drifting green chip to equip a cyan wing pod on your right. Hold fire for two parallel bolts per volley. Chip two adds a matching left pod for three parallel bolts. Chip three angles the outer bolts outward by 12° while the center bolt stays straight. The formation lasts for the flight. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
 Every other carrier pass mirrors the raider and both scout flights too. Tap **Sound off** once to enable combat audio. Scouts crack quickly and the carrier breaks up with a longer, lower thud. A red-orange and blue fringe briefly splits around each wreck. Tap **Sound on** to mute.

@@ -12,4 +12,6 @@ Weapon choice changes which part of the screen the player controls. Power Wave g
 
 The first green chip equips one hollow vector wing pod. The pod adds an offset bolt on the existing fire cadence. Make the extra firing lane narrow enough that the player still needs to aim. Keep the bullet sound to one cue per volley. With a carrier every ten seconds, requiring three clean pickups before hearing or seeing a weapon change would leave much of a short playtest empty.
 
-Playtest the carrier pass with the crossing scouts. Can the player see the upgrade on the next volley, use its second lane to hit a scout, and still find the incoming magenta round? If so, try a third-chip formation change in a later build.
+The second chip mirrors the pod on the left. Three parallel lanes reward keeping a cluster of enemies directly ahead. The third chip rotates the two pods outward by 12°. A scout 150 pixels upfield can now be hit roughly 47 pixels off the centerline. The same three bolts and single firing sound carry both formations, keeping the density of friendly fire predictable.
+
+During a crossing wave, try clearing a scout with an outside lane while keeping the center bolt trained on the carrier. On iPad, check whether the wider gaps still leave the incoming magenta round easy to track.

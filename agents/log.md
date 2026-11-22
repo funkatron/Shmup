@@ -138,3 +138,10 @@ Implemented the [first-chip experiment](../docs/power-ups.md). The hollow cyan p
 
 - [x] TypeScript and production build passed. Simulated single fire, chip collection, a two-bolt volley, a carrier kill by the offset bolt alone, repeat collection and one sound per volley.
 - [ ] On iPad with Lite 2, hold fire through the pickup and judge whether the second lane is easy to use during a scout crossing.
+
+## 2026-11-22 · Twin pods and spread fire · PR #1
+
+Extended the [carrier-chip progression](../docs/power-ups.md). Chip two equips the left pod. Chip three tips both outer lanes outward by 12 degrees. All levels retain the center shot, firing cadence and one cue per volley.
+
+- [x] TypeScript and Pages build passed. Simulated all four formations, a fourth pickup at the cap, firing cue counts and a carrier hit from the angled left lane.
+- [ ] Try the third pickup during the mirrored scout pass on iPad with the Lite 2. Check whether targets remain easy to track between the outer lanes.

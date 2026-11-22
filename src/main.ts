@@ -9,7 +9,8 @@ const flightSpeed = 210; // Logical pixels per second.
 
 class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
-  private wingPod!: Phaser.GameObjects.Image;
+  private pods: Phaser.GameObjects.Image[] = [];
+  private weaponLevel = 0;
   private status = document.getElementById("controller")!;
 
   private marks: Phaser.GameObjects.Image[] = [];
@@ -60,7 +61,8 @@ class FlightScene extends Phaser.Scene {
     this.carrier = beam(this, 370, 180, "carrier");
     this.chip = beam(this, 0, 0, "chip").setVisible(false);
     this.ship = beam(this, 180, 360, "fighter");
-    this.wingPod = beam(this, this.ship.x + 15, this.ship.y + 3, "wing-pod").setVisible(false);
+    this.weaponLevel = 0;
+    this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod").setVisible(false));
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     document.getElementById("build")!.textContent = [
       `v${version}  ·  ${commit}  ·  ${flightSpeed} px/s`,
@@ -121,7 +123,8 @@ class FlightScene extends Phaser.Scene {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
-        this.wingPod.setPosition(Math.min(this.ship.x + 15, 356), this.ship.y + 3).setVisible(true);
+        this.weaponLevel = Math.min(3, this.weaponLevel + 1);
+        this.positionPods();
         this.burst(this.chip.x, this.chip.y);
         this.chip.setVisible(false);
       } else if (this.chip.y > 490) {
@@ -132,10 +135,15 @@ class FlightScene extends Phaser.Scene {
     for (let i = this.shots.length - 1; i >= 0; i--) {
       const shot = this.shots[i];
       const previousY = shot.y;
-      shot.y -= 420 * seconds;
-      const crosses = (actor: Phaser.GameObjects.Image, halfWidth: number) =>
-        actor.visible && Math.abs(shot.x - actor.x) <= halfWidth
-        && previousY + 5 >= actor.y - 7 && shot.y - 5 <= actor.y + 7;
+      const previousX = shot.x;
+      const travel = 420 * seconds;
+      shot.x += Math.sin(shot.rotation) * travel;
+      shot.y -= Math.cos(shot.rotation) * travel;
+      const crosses = (actor: Phaser.GameObjects.Image, halfWidth: number) => {
+        if (!actor.visible || previousY + 5 < actor.y - 7 || shot.y - 5 > actor.y + 7) return false;
+        const fraction = previousY === shot.y ? 0 : Phaser.Math.Clamp((previousY - actor.y) / (previousY - shot.y), 0, 1);
+        return Math.abs(previousX + (shot.x - previousX) * fraction - actor.x) <= halfWidth;
+      };
       const hitCarrier = crosses(this.carrier, 16);
       const hitRaider = crosses(this.target, 12.5);
       const scout = this.scouts.find(({ sprite }) => crosses(sprite, 9));
@@ -189,19 +197,26 @@ class FlightScene extends Phaser.Scene {
       this.ship.y = Phaser.Math.Clamp(this.ship.y + distance * y / length, 10, 470);
     }
 
-    if (this.wingPod.visible) {
-      this.wingPod.setPosition(Math.min(this.ship.x + 15, 356), this.ship.y + 3);
-    }
+    if (length) this.positionPods();
 
     if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
-      if (this.wingPod.visible) {
-        this.shots.push(beam(this, this.wingPod.x, this.wingPod.y - 9, "bolt").setDepth(-1));
+      for (const pod of this.pods) {
+        if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setRotation(pod.rotation).setDepth(-1));
       }
       this.fireCooldown = 0.12;
     }
+  }
+
+  private positionPods() {
+    this.pods.forEach((pod, index) => {
+      const side = index === 0 ? 1 : -1;
+      pod.setVisible(this.weaponLevel > index);
+      pod.setPosition(Phaser.Math.Clamp(this.ship.x + side * 15, 4, 356), this.ship.y + 3);
+      pod.setRotation(this.weaponLevel === 3 ? side * Math.PI / 15 : 0);
+    });
   }
 
   private explode(x: number, y: number, hull: Hull) {
