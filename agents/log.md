@@ -131,3 +131,10 @@ Promoted the octave audition to the normal game mix. Scouts and raiders use half
 - [ ] Audition sustained fire over the carrier tail on physical iPad speakers. Check whether the incoming cue remains recognizable with eyes on the ship.
 
 The [power-up study](../docs/power-ups.md) links the original Musha Aleste and Blazing Lazers manuals and proposes a first-chip reward for the existing carrier.
+
+## 2026-11-22 · First carrier chip equips a wing pod · PR #1
+
+Implemented the [first-chip experiment](../docs/power-ups.md). The hollow cyan pod adds a parallel bolt to the right of the fighter. Both bolts use the existing enemy collision logic. Repeat pickups preserve the single pod for the flight.
+
+- [x] TypeScript and production build passed. Simulated single fire, chip collection, a two-bolt volley, a carrier kill by the offset bolt alone, repeat collection and one sound per volley.
+- [ ] On iPad with Lite 2, hold fire through the pickup and judge whether the second lane is easy to use during a scout crossing.

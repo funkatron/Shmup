@@ -53,6 +53,9 @@ export function prepareTraces(scene: Phaser.Scene) {
     [5,4,15,4,15,16,5,16,5,4], [2,7,5,7], [15,7,18,7],
     [2,13,5,13], [15,13,18,13],
   ]);
+  traceTexture(scene, "wing-pod", 10, 16, "#62fff4", 0.9, [
+    [5,2,8,7,7,13,3,13,2,7,5,2],
+  ]);
   traceTexture(scene, "bolt", 12, 20, "#fff458", 1, [[6,5,6,15]]);
   traceTexture(scene, "incoming", 18, 18, "#ff50ff", 1, [
     [9,4,14,9,9,14,4,9,9,4], [9,8,9,10],

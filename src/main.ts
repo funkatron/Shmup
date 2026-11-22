@@ -9,6 +9,7 @@ const flightSpeed = 210; // Logical pixels per second.
 
 class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
+  private wingPod!: Phaser.GameObjects.Image;
   private status = document.getElementById("controller")!;
 
   private marks: Phaser.GameObjects.Image[] = [];
@@ -59,6 +60,7 @@ class FlightScene extends Phaser.Scene {
     this.carrier = beam(this, 370, 180, "carrier");
     this.chip = beam(this, 0, 0, "chip").setVisible(false);
     this.ship = beam(this, 180, 360, "fighter");
+    this.wingPod = beam(this, this.ship.x + 15, this.ship.y + 3, "wing-pod").setVisible(false);
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     document.getElementById("build")!.textContent = [
       `v${version}  ·  ${commit}  ·  ${flightSpeed} px/s`,
@@ -119,6 +121,7 @@ class FlightScene extends Phaser.Scene {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
+        this.wingPod.setPosition(Math.min(this.ship.x + 15, 356), this.ship.y + 3).setVisible(true);
         this.burst(this.chip.x, this.chip.y);
         this.chip.setVisible(false);
       } else if (this.chip.y > 490) {
@@ -186,10 +189,17 @@ class FlightScene extends Phaser.Scene {
       this.ship.y = Phaser.Math.Clamp(this.ship.y + distance * y / length, 10, 470);
     }
 
+    if (this.wingPod.visible) {
+      this.wingPod.setPosition(Math.min(this.ship.x + 15, 356), this.ship.y + 3);
+    }
+
     if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
+      if (this.wingPod.visible) {
+        this.shots.push(beam(this, this.wingPod.x, this.wingPod.y - 9, "bolt").setDepth(-1));
+      }
       this.fireCooldown = 0.12;
     }
   }
