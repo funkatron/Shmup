@@ -16,7 +16,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Shoot it once, then fly through the drifting green chip for a gold flash. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
-Every other carrier pass mirrors the raider and both scout flights too. Tap **Sound off** once to enable impact audio. Scouts crack quickly and the carrier breaks up with a longer, lower thud. A red-orange and blue fringe briefly splits around each wreck. Tap **Sound on** to mute.
+Every other carrier pass mirrors the raider and both scout flights too. Tap **Sound off** once to enable combat audio. Scouts crack quickly and the carrier breaks up with a longer, lower thud. A red-orange and blue fringe briefly splits around each wreck. Tap **Sound on** to mute.
 
 To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship gives visual feedback and play continues.
 
@@ -56,4 +56,6 @@ The [Musha Aleste flight study](docs/musha-aleste.md) breaks down Edward’s Sta
 
 ### Compare pitched explosions
 
-Open the preview with `?pitch=-12` for half-speed impacts or `?pitch=-24` for quarter speed. Append `&echo=on` to add two dark repeats. The normal play URL uses the original pitch and diffuse tail.
+The player bolt makes a short descending zap. The aimed raider round has a longer rising cue. Scouts and raiders explode one octave down, carriers two octaves down. Each explosion has two damped echoes. For an A/B comparison, use `?pitch=0&echo=off` for the original explosion mix, or set `pitch=-12` or `pitch=-24` to use one pitch across all hulls.
+
+See the [power-up design study](docs/power-ups.md) for the next carrier experiment.

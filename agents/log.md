@@ -122,3 +122,12 @@ Added opt-in half-speed and quarter-speed playback of the existing hull sounds. 
 
 - [x] TypeScript and Pages build passed. Rendered all three ships at both pitches through the playback path with matched noise seeds for the echo comparison. Checked finite, unclipped audition output.
 - [ ] Compare scout overlap and carrier weight on iPad speakers.
+
+## 2026-11-22 · Combat audio and power-up study · PR #1
+
+Promoted the octave audition to the normal game mix. Scouts and raiders use half speed and carriers quarter speed, with the two damped repeats. Added a 65 ms descending player bolt and a 210 ms rising raider projectile cue, triggered at launch and cached under the existing sound toggle.
+
+- [x] Production Pages build and TypeScript check passed. Exercised both launch sounds and three explosion buffers at 44.1 and 48 kHz, checked individual samples for headroom, and verified mute gating and bolt buffer reuse.
+- [ ] Audition sustained fire over the carrier tail on physical iPad speakers. Check whether the incoming cue remains recognizable with eyes on the ship.
+
+The [power-up study](../docs/power-ups.md) links the original Musha Aleste and Blazing Lazers manuals and proposes a first-chip reward for the existing carrier.

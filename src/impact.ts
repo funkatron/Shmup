@@ -121,10 +121,33 @@ function addEcho(context: AudioContext, source: AudioBuffer, speed: number) {
   return result;
 }
 
-export class ImpactAudio {
+type Projectile = "bolt" | "incoming";
+
+const projectileProfiles = {
+  bolt: { start: 1680, end: 640, seconds: 0.065, gain: 0.095 },
+  incoming: { start: 390, end: 1180, seconds: 0.21, gain: 0.14 },
+};
+
+function synthProjectile(context: AudioContext, kind: Projectile) {
+  const { start, end, seconds, gain } = projectileProfiles[kind];
+  const buffer = context.createBuffer(1, Math.ceil(seconds * context.sampleRate), context.sampleRate);
+  const samples = buffer.getChannelData(0);
+  let phase = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / context.sampleRate;
+    const progress = i / (samples.length - 1);
+    const frequency = start * (end / start) ** progress;
+    phase += 2 * Math.PI * frequency / context.sampleRate;
+    const tone = Math.sin(phase) + 0.22 * Math.sin(3 * phase);
+    const crushed = Math.round(tone * 20) / 20;
+    samples[i] = gain * Math.min(t / 0.003, 1) * (1 - progress) ** 2 * crushed;
+  }
+  return buffer;
+}
+
+export class CombatAudio {
   private options = new URLSearchParams(location.search);
-  private speed = this.options.get("pitch") === "-24" ? 0.25 :
-    this.options.get("pitch") === "-12" ? 0.5 : 1;
+  private projectileBuffers = new Map<Projectile, AudioBuffer>();
   private context?: AudioContext;
   private buffers = new Map<Hull, AudioBuffer>();
   private enabled = false;
@@ -150,18 +173,37 @@ export class ImpactAudio {
     }
   }
 
-  play(hull: Hull) {
+  projectile(kind: Projectile) {
     const context = this.context;
     if (!this.enabled || context?.state !== "running") return;
+    let buffer = this.projectileBuffers.get(kind);
+    if (!buffer) {
+      buffer = synthProjectile(context, kind);
+      this.projectileBuffers.set(kind, buffer);
+    }
+    this.playBuffer(context, buffer, 1);
+  }
+
+  explosion(hull: Hull) {
+    const context = this.context;
+    if (!this.enabled || context?.state !== "running") return;
+    const pitch = this.options.get("pitch");
+    const rates: Record<string, number> = { "0": 1, "-12": 0.5, "-24": 0.25 };
+    const speed = pitch !== null && Object.hasOwn(rates, pitch)
+      ? rates[pitch] : hull === "carrier" ? 0.25 : 0.5;
     let buffer = this.buffers.get(hull);
     if (!buffer) {
       buffer = synth(context, hull);
-      if (this.options.get("echo") === "on") buffer = addEcho(context, buffer, this.speed);
+      if (this.options.get("echo") !== "off") buffer = addEcho(context, buffer, speed);
       this.buffers.set(hull, buffer);
     }
+    this.playBuffer(context, buffer, speed * (hull === "scout" ? 0.94 + Math.random() * 0.12 : 1));
+  }
+
+  private playBuffer(context: AudioContext, buffer: AudioBuffer, speed: number) {
     const hit = context.createBufferSource();
     hit.buffer = buffer;
-    hit.playbackRate.value = this.speed * (hull === "scout" ? 0.94 + Math.random() * 0.12 : 1);
+    hit.playbackRate.value = speed;
     hit.connect(context.destination);
     hit.onended = () => hit.disconnect();
     hit.start();

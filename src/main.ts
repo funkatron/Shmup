@@ -2,7 +2,7 @@ import Phaser from "phaser";
 
 import { prepareTraces, beam } from "./beam";
 
-import { ImpactAudio, fragments, type Hull } from "./impact";
+import { CombatAudio, fragments, type Hull } from "./impact";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const flightSpeed = 210; // Logical pixels per second.
@@ -27,7 +27,7 @@ class FlightScene extends Phaser.Scene {
   private mirrored = false;
   private ledges: Phaser.GameObjects.Image[] = [];
   private ledgeScroll = 0;
-  private impacts = new ImpactAudio();
+  private combatAudio = new CombatAudio();
   private enemyShots: { sprite: Phaser.GameObjects.Image; vx: number; vy: number }[] = [];
   private fireCooldown = 0;
 
@@ -53,7 +53,7 @@ class FlightScene extends Phaser.Scene {
     this.ledgeScroll = 0;
     this.ledges = parallax ? Array.from({ length: 4 }, (_, i) =>
       beam(this, 180, i * 192 - 96, "ledges").setDepth(-1.5)) : [];
-    document.getElementById("sound")!.onclick = () => this.impacts.toggle();
+    document.getElementById("sound")!.onclick = () => this.combatAudio.toggle();
     this.target = beam(this, -12, 125, "raider");
     this.carrierTime = 0;
     this.carrier = beam(this, 370, 180, "carrier");
@@ -157,6 +157,7 @@ class FlightScene extends Phaser.Scene {
     this.updateEnemyShots(seconds);
     if (this.target.visible && previousTime < 1.0 && passTime >= 1.0) {
       const angle = Math.atan2(this.ship.y - this.target.y, this.ship.x - this.target.x);
+      this.combatAudio.projectile("incoming");
       this.enemyShots.push({
         sprite: beam(this, this.target.x, this.target.y, "incoming"),
         vx: 105 * Math.cos(angle), vy: 105 * Math.sin(angle),
@@ -187,13 +188,14 @@ class FlightScene extends Phaser.Scene {
 
     if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
+      this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
       this.fireCooldown = 0.12;
     }
   }
 
   private explode(x: number, y: number, hull: Hull) {
-    this.impacts.play(hull);
+    this.combatAudio.explosion(hull);
     this.burst(x, y);
     const count = fragments(hull);
     for (const side of [-1, 1]) {
