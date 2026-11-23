@@ -152,3 +152,10 @@ Edward wanted a bloom that opens at 45° and narrows toward a target. Chip four 
 
 - [x] TypeScript and Pages build passed. Simulated all four chip pickups, the five-projectile launch, opposing launch angles, outward travel and missile cleanup.
 - [ ] Check tracer shape and incoming-shot visibility during a busy scout wave on iPad.
+
+## 2026-11-23 · Lower-city parallax · PR #1
+
+Added four horizontally wrapping vector strips below the flight path. The skyline, signs, elevated rail and roof aerials move at 6, 17, 34 and 60 logical pixels per second against the vertically scrolling canyon. Their scene clock freezes on pause. Test the lower edge during a carrier chase on iPad.
+
+- [x] TypeScript and production build.
+- [ ] Physical Lite 2 and iPad readability check.

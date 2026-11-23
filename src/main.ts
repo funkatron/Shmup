@@ -20,6 +20,7 @@ class FlightScene extends Phaser.Scene {
 
   private marks: Phaser.GameObjects.Image[] = [];
   private farBanks: Phaser.GameObjects.Image[] = [];
+  private city: { tiles: Phaser.GameObjects.Image[]; speed: number; offset: number }[] = [];
   private farScroll = 0;
   private scouts: { entry: number; fromRight: boolean; sprite: Phaser.GameObjects.Image; down: boolean }[] = [];
   private bridge!: Phaser.GameObjects.Image;
@@ -41,6 +42,13 @@ class FlightScene extends Phaser.Scene {
   create() {
     prepareTraces(this);
     const parallax = new URLSearchParams(location.search).get("parallax") !== "off";
+    const strip = (key: string, y: number, depth: number, speed: number) => ({
+      tiles: [180, 540].map(x => beam(this, x, y, key).setDepth(depth)), speed, offset: 0,
+    });
+    this.city = parallax ? [
+      strip("skyline", 419, -6, 6), strip("sign-towers", 454, -5, 17),
+      strip("skyrail", 464, -4.5, 34), strip("roof-aerials", 466, -4, 60),
+    ] : [];
     this.farScroll = 0;
     this.farBanks = parallax ? Array.from({ length: 4 }, (_, i) =>
       beam(this, 180, i * 192 - 96, "folds").setDepth(-3)) : [];
@@ -94,6 +102,10 @@ class FlightScene extends Phaser.Scene {
     if (this.paused) return;
 
     const seconds = Math.min(delta, 50) / 1000;
+    for (const layer of this.city) {
+      layer.offset = (layer.offset + layer.speed * seconds) % 360;
+      layer.tiles.forEach((tile, i) => { tile.x = 180 + i * 360 - layer.offset; });
+    }
     this.farScroll = (this.farScroll + 18 * seconds) % 192;
     this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
     this.ledgeScroll = (this.ledgeScroll + 148 * seconds) % 192;

@@ -59,3 +59,5 @@ The [Musha Aleste flight study](docs/musha-aleste.md) breaks down Edward’s Sta
 The player bolt makes a short descending zap. The aimed raider round has a longer rising cue. Scouts and raiders explode one octave down, carriers two octaves down. Each explosion has two damped echoes. For an A/B comparison, use `?pitch=0&echo=off` for the original explosion mix, or set `pitch=-12` or `pitch=-24` to use one pitch across all hulls.
 
 See the [power-up design study](docs/power-ups.md) for the next carrier experiment.
+
+The lower edge of the flight scene passes four city layers. Violet towers drift slowly behind neon sign towers, an elevated railway and rooftop antennas. The existing parallax switch also controls the city.

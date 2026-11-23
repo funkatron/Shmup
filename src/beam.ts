@@ -33,6 +33,35 @@ function traceTexture(scene: Phaser.Scene, key: string, w: number, h: number,
 }
 
 export function prepareTraces(scene: Phaser.Scene) {
+  // Each strip is 360 units wide and meets its neighbor in empty beam space.
+  const skyline: Trace[] = [];
+  for (let i = 0; i < 18; i++) {
+    const x = 2 + 20 * i, y = 16 + (i * 31) % 42;
+    skyline.push([x,126,x,y+4,x+4,y,x+13,y,x+16,y+5,x+16,126],
+      [x+7,y,x+7,y-8], [x+3,y+13,x+11,y+13]);
+  }
+  traceTexture(scene, "skyline", 360, 128, "#8077d9", 0.46, skyline);
+  const roofs: Trace[] = [];
+  for (let i = 0; i < 8; i++) {
+    const x = 2 + 45 * i, y = 18 + (i * 19) % 40;
+    roofs.push([x,126,x,y+8,x+10,y,x+30,y,x+37,y+6,x+37,126],
+      [x,y+8,x+26,y+8,x+37,y+6], [x+26,y+8,x+26,124],
+      [x+4,y+15,x+18,y+15,x+18,y+30,x+4,y+30,x+4,y+15],
+      [x+7,y+19,x+14,y+19,x+8,y+26,x+15,y+26]);
+  }
+  traceTexture(scene, "sign-towers", 360, 128, "#be659e", 0.58, roofs);
+  traceTexture(scene, "skyrail", 360, 64, "#579db6", 0.60, [
+    [0,18,360,18], [0,24,360,24], [26,24,35,33,42,33,51,24],
+    [35,33,35,64], [42,33,42,64], [220,24,231,40,241,40,252,24],
+    [231,40,231,64], [241,40,241,64],
+    [95,16,101,9,142,9,151,16,95,16], [107,12,136,12],
+  ]);
+  traceTexture(scene, "roof-aerials", 360, 64, "#987abf", 0.72, [
+    [2,63,2,37,47,37,59,45,59,63], [17,37,23,9,29,37,20,25,26,20],
+    [23,9,23,3], [158,63,172,45,232,45,245,55,245,63],
+    [184,45,184,30,207,30,207,45], [188,34,202,34], [188,38,202,38],
+    [300,61,308,28,315,61,304,47,312,39], [308,28,308,18],
+  ]);
   traceTexture(scene, "fighter", 32, 32, "#62fff4", 1, [
     [16,5,20,15,26,23,20,21,17,18,15,18,12,21,6,23,12,15,16,5],
     [12,15,11,20], [20,15,21,20], [16,10,18,16,14,16,16,10],
