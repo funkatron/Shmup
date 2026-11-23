@@ -10,6 +10,11 @@ const flightSpeed = 210; // Logical pixels per second.
 class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
   private pods: Phaser.GameObjects.Image[] = [];
+  private missileCooldown = 0;
+  private missiles = new Map<Phaser.GameObjects.Image, {
+    age: number; target?: Phaser.GameObjects.Image; trail: Phaser.GameObjects.Graphics;
+    points: { x: number; y: number; time: number }[];
+  }>();
   private weaponLevel = 0;
   private status = document.getElementById("controller")!;
 
@@ -61,6 +66,8 @@ class FlightScene extends Phaser.Scene {
     this.carrier = beam(this, 370, 180, "carrier");
     this.chip = beam(this, 0, 0, "chip").setVisible(false);
     this.ship = beam(this, 180, 360, "fighter");
+    this.missiles.clear();
+    this.missileCooldown = 0;
     this.weaponLevel = 0;
     this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod").setVisible(false));
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
@@ -123,7 +130,7 @@ class FlightScene extends Phaser.Scene {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
-        this.weaponLevel = Math.min(3, this.weaponLevel + 1);
+        this.weaponLevel = Math.min(4, this.weaponLevel + 1);
         this.positionPods();
         this.burst(this.chip.x, this.chip.y);
         this.chip.setVisible(false);
@@ -136,9 +143,31 @@ class FlightScene extends Phaser.Scene {
       const shot = this.shots[i];
       const previousY = shot.y;
       const previousX = shot.x;
-      const travel = 420 * seconds;
+      const missile = this.missiles.get(shot);
+      if (missile) {
+        missile.age += seconds;
+        if (missile.age >= 0.14) {
+          if (!missile.target?.visible || missile.target.y >= shot.y || missile.target.x < 0 || missile.target.x > 360) {
+            missile.target = this.frontTarget(shot.x, shot.y);
+          }
+          const target = missile.target;
+          const heading = target ? Math.atan2(target.x - shot.x, shot.y - target.y) : 0;
+          shot.rotation += Phaser.Math.Clamp(heading - shot.rotation, -4.5 * seconds, 4.5 * seconds);
+        }
+      }
+      const travel = (missile ? 300 : 420) * seconds;
       shot.x += Math.sin(shot.rotation) * travel;
       shot.y -= Math.cos(shot.rotation) * travel;
+      if (missile) {
+        missile.points.push({ x: shot.x, y: shot.y, time: missile.age });
+        while (missile.points.length && missile.points[0].time < missile.age - 0.24) missile.points.shift();
+        missile.trail.clear();
+        for (let j = 1; j < missile.points.length; j++) {
+          const a = missile.points[j - 1], b = missile.points[j];
+          missile.trail.lineStyle(1, 0x80ffca, 0.65 * (1 - (missile.age - a.time) / 0.24));
+          missile.trail.lineBetween(a.x, a.y, b.x, b.y);
+        }
+      }
       const crosses = (actor: Phaser.GameObjects.Image, halfWidth: number) => {
         if (!actor.visible || previousY + 5 < actor.y - 7 || shot.y - 5 > actor.y + 7) return false;
         const fraction = previousY === shot.y ? 0 : Phaser.Math.Clamp((previousY - actor.y) / (previousY - shot.y), 0, 1);
@@ -160,7 +189,9 @@ class FlightScene extends Phaser.Scene {
         this.target.setVisible(false);
         this.explode(this.target.x, this.target.y, "raider");
       }
-      if (scout || hitCarrier || hitRaider || shot.y < -5) {
+      if (scout || hitCarrier || hitRaider || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
+        missile?.trail.destroy();
+        this.missiles.delete(shot);
         shot.destroy();
         this.shots.splice(i, 1);
       }
@@ -174,6 +205,7 @@ class FlightScene extends Phaser.Scene {
         vx: 105 * Math.cos(angle), vy: 105 * Math.sin(angle),
       });
     }
+    this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
     this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
     if (!pad) return;
 
@@ -206,8 +238,32 @@ class FlightScene extends Phaser.Scene {
       for (const pod of this.pods) {
         if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setRotation(pod.rotation).setDepth(-1));
       }
+      if (this.weaponLevel === 4 && this.missileCooldown <= 0) {
+        const target = this.frontTarget(this.ship.x, this.ship.y);
+        this.pods.forEach((pod, index) => {
+          const shot = beam(this, pod.x, pod.y - 6, "missile").setRotation(index === 0 ? Math.PI / 4 : -Math.PI / 4);
+          this.shots.push(shot);
+          this.missiles.set(shot, { age: 0, target, trail: this.add.graphics().setDepth(-1),
+            points: [{ x: shot.x, y: shot.y, time: 0 }] });
+        });
+        this.missileCooldown = 0.84;
+      }
       this.fireCooldown = 0.12;
     }
+  }
+
+  private frontTarget(x: number, y: number) {
+    let closest: Phaser.GameObjects.Image | undefined;
+    let distance = Infinity;
+    for (const actor of [this.carrier, this.target, ...this.scouts.map(s => s.sprite)]) {
+      if (!actor.visible || actor.y >= y || actor.x < 0 || actor.x > 360) continue;
+      const range = Math.hypot(actor.x - x, actor.y - y);
+      if (range < distance) {
+        closest = actor;
+        distance = range;
+      }
+    }
+    return closest;
   }
 
   private positionPods() {
@@ -215,7 +271,7 @@ class FlightScene extends Phaser.Scene {
       const side = index === 0 ? 1 : -1;
       pod.setVisible(this.weaponLevel > index);
       pod.setPosition(Phaser.Math.Clamp(this.ship.x + side * 15, 4, 356), this.ship.y + 3);
-      pod.setRotation(this.weaponLevel === 3 ? side * Math.PI / 15 : 0);
+      pod.setRotation(this.weaponLevel >= 3 ? side * Math.PI / 15 : 0);
     });
   }
 

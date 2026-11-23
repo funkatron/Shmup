@@ -145,3 +145,10 @@ Extended the [carrier-chip progression](../docs/power-ups.md). Chip two equips t
 
 - [x] TypeScript and Pages build passed. Simulated all four formations, a fourth pickup at the cap, firing cue counts and a carrier hit from the angled left lane.
 - [ ] Try the third pickup during the mirrored scout pass on iPad with the Lite 2. Check whether targets remain easy to track between the outer lanes.
+
+## 2026-11-23 · Fourth-chip homing missiles · PR #1
+
+Edward wanted a bloom that opens at 45° and narrows toward a target. Chip four adds a pair to the three-bolt spread, initially coasting outward before steering toward the nearest enemy ahead. A short mint tracer follows each actual path. Missiles run on a separate cooldown to give each pair room to read.
+
+- [x] TypeScript and Pages build passed. Simulated all four chip pickups, the five-projectile launch, opposing launch angles, outward travel and missile cleanup.
+- [ ] Check tracer shape and incoming-shot visibility during a busy scout wave on iPad.
