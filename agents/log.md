@@ -159,3 +159,10 @@ Added four horizontally wrapping vector strips below the flight path. The skylin
 
 - [x] TypeScript and production build.
 - [ ] Physical Lite 2 and iPad readability check.
+
+## 2026-11-23 · City overflight · PR #1
+
+Replaced the side-on skyline with a projected street grid beneath the entire route. A moving nine-row window generates consistent buildings from block and lot coordinates. Roof heights produce different projected speeds, and the avenue bends between blocks. The original scrolling canyon banks sit above the district.
+
+- [x] TypeScript and production Pages build passed.
+- [ ] Physical iPad readability and frame pacing during a full missile volley.

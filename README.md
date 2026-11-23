@@ -60,4 +60,4 @@ The player bolt makes a short descending zap. The aimed raider round has a longe
 
 See the [power-up design study](docs/power-ups.md) for the next carrier experiment.
 
-The lower edge of the flight scene passes four city layers. Violet towers drift slowly behind neon sign towers, an elevated railway and rooftop antennas. The existing parallax switch also controls the city.
+Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
