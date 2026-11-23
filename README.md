@@ -61,3 +61,5 @@ The player bolt makes a short descending zap. The aimed raider round has a longe
 See the [power-up design study](docs/power-ups.md) for the next carrier experiment.
 
 Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
+
+The **Warden** enters after 40 seconds and takes over the arena. Its hull meter sits above its wings. Short pink traces announce an aimed three-shot fan. At half hull the fan widens to five. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the starter gun](https://funkatron.github.io/Shmup/?encounter=boss).

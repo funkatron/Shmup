@@ -29,6 +29,14 @@ class FlightScene extends Phaser.Scene {
   private target!: Phaser.GameObjects.Image;
   private carrier!: Phaser.GameObjects.Image;
   private chip!: Phaser.GameObjects.Image;
+  private boss!: Phaser.GameObjects.Image;
+  private bossMeter!: Phaser.GameObjects.Graphics;
+  private bossHp = 0;
+  private bossAge = 0;
+  private nextFan = 0;
+  private aim = 0;
+  private warned = false;
+  private untilBoss = 40;
   private carrierTime = 0;
   private chipDrift = 0;
   private paused = false;
@@ -65,6 +73,9 @@ class FlightScene extends Phaser.Scene {
       beam(this, 180, i * 192 - 96, "ledges").setDepth(-1.5)) : [];
     document.getElementById("sound")!.onclick = () => this.combatAudio.toggle();
     this.target = beam(this, -12, 125, "raider");
+    this.boss = beam(this, 180, -30, "warden").setVisible(false);
+    this.bossMeter = this.add.graphics().setDepth(1);
+    this.untilBoss = new URLSearchParams(location.search).get("encounter") === "boss" ? 0 : 40;
     this.carrierTime = 0;
     this.carrier = beam(this, 370, 180, "carrier");
     this.chip = beam(this, 0, 0, "chip").setVisible(false);
@@ -108,28 +119,34 @@ class FlightScene extends Phaser.Scene {
     }
     this.bridge.y = this.marks[1].y;
     const previousTime = this.carrierTime % 5;
-    this.carrierTime += seconds;
-    if (this.carrierTime >= 10) {
-      this.carrierTime %= 10;
-      this.mirrored = !this.mirrored;
-      this.carrier.setVisible(true);
-      for (const scout of this.scouts) scout.down = false;
+    let passTime = previousTime;
+    this.untilBoss -= seconds;
+    if (this.untilBoss <= 0) {
+      this.updateBoss(seconds);
+    } else {
+      this.carrierTime += seconds;
+      if (this.carrierTime >= 10) {
+        this.carrierTime %= 10;
+        this.mirrored = !this.mirrored;
+        this.carrier.setVisible(true);
+        for (const scout of this.scouts) scout.down = false;
+      }
+      passTime = this.carrierTime % 5;
+      if (passTime < previousTime) this.target.setVisible(true);
+      const fieldX = (x: number) => this.mirrored ? 360 - x : x;
+      this.target.x = fieldX(-12 + 96 * passTime);
+      this.carrier.x = fieldX(370 - 76 * this.carrierTime);
+      this.scouts.forEach(({ sprite, down, entry, fromRight }) => {
+        const age = this.carrierTime - entry;
+        const progress = -16 + (fromRight ? 148 : 102) * age;
+        sprite.setVisible(!down && age >= 0 && progress <= 376);
+        if (!sprite.visible) return;
+        const arc = Math.sin(Math.PI * progress / 360);
+        sprite.setFlipX(fromRight !== this.mirrored);
+        sprite.setPosition(fieldX(fromRight ? 360 - progress : progress),
+          fromRight ? 300 - 24 * arc : 211 + 42 * arc);
+      });
     }
-    const passTime = this.carrierTime % 5;
-    if (passTime < previousTime) this.target.setVisible(true);
-    const fieldX = (x: number) => this.mirrored ? 360 - x : x;
-    this.target.x = fieldX(-12 + 96 * passTime);
-    this.carrier.x = fieldX(370 - 76 * this.carrierTime);
-    this.scouts.forEach(({ sprite, down, entry, fromRight }) => {
-      const age = this.carrierTime - entry;
-      const progress = -16 + (fromRight ? 148 : 102) * age;
-      sprite.setVisible(!down && age >= 0 && progress <= 376);
-      if (!sprite.visible) return;
-      const arc = Math.sin(Math.PI * progress / 360);
-      sprite.setFlipX(fromRight !== this.mirrored);
-      sprite.setPosition(fieldX(fromRight ? 360 - progress : progress),
-        fromRight ? 300 - 24 * arc : 211 + 42 * arc);
-    });
     if (this.chip.visible) {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
@@ -177,6 +194,7 @@ class FlightScene extends Phaser.Scene {
         const fraction = previousY === shot.y ? 0 : Phaser.Math.Clamp((previousY - actor.y) / (previousY - shot.y), 0, 1);
         return Math.abs(previousX + (shot.x - previousX) * fraction - actor.x) <= halfWidth;
       };
+      const hitBoss = crosses(this.boss, 43);
       const hitCarrier = crosses(this.carrier, 16);
       const hitRaider = crosses(this.target, 12.5);
       const scout = this.scouts.find(({ sprite }) => crosses(sprite, 9));
@@ -184,6 +202,23 @@ class FlightScene extends Phaser.Scene {
         scout.down = true;
         scout.sprite.setVisible(false);
         this.explode(scout.sprite.x, scout.sprite.y, "scout");
+      } else if (hitBoss) {
+        this.bossHp -= missile ? 3 : 1;
+        this.boss.setTint(0xffdddd);
+        if (this.bossHp <= 0) {
+          this.boss.setVisible(false);
+          this.bossMeter.clear();
+          this.explode(this.boss.x, this.boss.y, "carrier");
+          this.burst(this.boss.x - 31, this.boss.y);
+          this.burst(this.boss.x + 31, this.boss.y);
+          for (const shot of this.enemyShots) shot.sprite.destroy();
+          this.enemyShots = [];
+          this.carrierTime = 0;
+          this.carrier.setVisible(true);
+          this.target.setVisible(true);
+          for (const scout of this.scouts) scout.down = false;
+          this.untilBoss = 40;
+        }
       } else if (hitCarrier) {
         this.carrier.setVisible(false);
         this.explode(this.carrier.x, this.carrier.y, "carrier");
@@ -193,7 +228,7 @@ class FlightScene extends Phaser.Scene {
         this.target.setVisible(false);
         this.explode(this.target.x, this.target.y, "raider");
       }
-      if (scout || hitCarrier || hitRaider || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
+      if (scout || hitBoss || hitCarrier || hitRaider || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
         missile?.trail.destroy();
         this.missiles.delete(shot);
         shot.destroy();
@@ -256,10 +291,52 @@ class FlightScene extends Phaser.Scene {
     }
   }
 
+  private updateBoss(seconds: number) {
+    if (!this.boss.visible) {
+      this.boss.setPosition(180, -30).setVisible(true);
+      this.bossHp = 48;
+      this.bossAge = 0;
+      this.nextFan = 2.5;
+      this.warned = false;
+      this.carrier.setVisible(false);
+      this.target.setVisible(false);
+      for (const scout of this.scouts) scout.sprite.setVisible(false);
+    }
+    this.bossAge += seconds;
+    this.boss.clearTint();
+    this.boss.y = Math.min(85, -30 + this.bossAge * 75);
+    this.boss.x = 180 + 99 * Math.sin(this.bossAge * 0.82);
+    const g = this.bossMeter.clear();
+    for (let i = 0; i < Math.ceil(this.bossHp / 4); i++) {
+      g.lineStyle(2, 0xff996e, 0.9).lineBetween(this.boss.x - 29 + i*5, this.boss.y - 28,
+        this.boss.x - 26 + i*5, this.boss.y - 28);
+    }
+    if (this.bossAge < this.nextFan - 0.65) return;
+    if (!this.warned) {
+      this.aim = Math.atan2(this.ship.y - this.boss.y - 16, this.ship.x - this.boss.x);
+      this.warned = true;
+    }
+    const count = this.bossHp <= 24 ? 5 : 3;
+    for (let i = 0; i < count; i++) {
+      const angle = this.aim + (i - (count - 1) / 2) * 0.24;
+      const dx = Math.cos(angle), dy = Math.sin(angle);
+      const x = this.boss.x, y = this.boss.y + 16;
+      g.lineStyle(1, 0xff528c, 0.85).lineBetween(x + 12*dx, y + 12*dy, x + 30*dx, y + 30*dy);
+      if (this.bossAge >= this.nextFan) {
+        this.enemyShots.push({sprite: beam(this, x, y, "incoming"), vx: 145*dx, vy: 145*dy});
+      }
+    }
+    if (this.bossAge >= this.nextFan) {
+      this.combatAudio.projectile("incoming");
+      this.nextFan += this.bossHp <= 24 ? 1.55 : 2.05;
+      this.warned = false;
+    }
+  }
+
   private frontTarget(x: number, y: number) {
     let closest: Phaser.GameObjects.Image | undefined;
     let distance = Infinity;
-    for (const actor of [this.carrier, this.target, ...this.scouts.map(s => s.sprite)]) {
+    for (const actor of [this.boss, this.carrier, this.target, ...this.scouts.map(s => s.sprite)]) {
       if (!actor.visible || actor.y >= y || actor.x < 0 || actor.x > 360) continue;
       const range = Math.hypot(actor.x - x, actor.y - y);
       if (range < distance) {

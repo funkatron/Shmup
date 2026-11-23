@@ -166,3 +166,10 @@ Replaced the side-on skyline with a projected street grid beneath the entire rou
 
 - [x] TypeScript and production Pages build passed.
 - [ ] Physical iPad readability and frame pacing during a full missile volley.
+
+## 2026-11-23 · Warden boss · PR #1
+
+A 48-hit vector gunship takes over the city after four carrier passes. Its charge traces show the incoming fan directions. Half hull adds two outer rounds and shortens the interval. Destruction clears incoming shots and restores the carrier encounter. The README links a direct boss playtest.
+
+- [x] TypeScript, production build and simulated scene combat. Verified entry, three-shot attack, half-health transition, expanded fan, defeat and wave resumption.
+- [ ] Test attack readability and sustained aim on iPad with Lite 2.
