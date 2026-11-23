@@ -145,9 +145,44 @@ function synthProjectile(context: AudioContext, kind: Projectile) {
   return buffer;
 }
 
+// Contours adapted from the numbered sound test. One buffer per cue and
+// sample rate, generated on first use through the existing sound switch.
+const cueProfiles = {
+  pickup: { start: 480, end: 960, seconds: 0.34, gain: 0.14, steps: 4, grit: 0 },
+  missiles: { start: 920, end: 170, seconds: 0.25, gain: 0.13, steps: 0, grit: 0.48 },
+  charge: { start: 190, end: 820, seconds: 0.61, gain: 0.15, steps: 0, grit: 0.13 },
+  playerHit: { start: 240, end: 95, seconds: 0.17, gain: 0.24, steps: 0, grit: 0.58 },
+} as const;
+
+type Cue = keyof typeof cueProfiles;
+
+function synthCue(context: AudioContext, kind: Cue) {
+  const { start, end, seconds, gain, steps, grit } = cueProfiles[kind];
+  const rate = context.sampleRate;
+  const buffer = context.createBuffer(1, Math.ceil(seconds * rate), rate);
+  const samples = buffer.getChannelData(0);
+  let phase = 0, noise = 0, nextLatch = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / rate;
+    const u = i / (samples.length - 1);
+    const bend = steps ? Math.min(steps - 1, Math.floor(u * steps)) / (steps - 1) : u;
+    phase += 2 * Math.PI * start * (end / start) ** bend / rate;
+    if (i >= nextLatch) {
+      noise = Math.random() * 2 - 1;
+      nextLatch += rate / 5500;
+    }
+    const tone = Math.sin(phase) + 0.2 * Math.sin(phase * 3);
+    const body = kind === "charge" ? 0.35 + 0.65 * u : (1 - u) ** 0.75;
+    const edge = Math.min(1, t / 0.005, (seconds - t) / 0.022);
+    samples[i] = gain * edge * body * (Math.round(22 * tone) / 22 * (1 - grit) + grit * noise);
+  }
+  return buffer;
+}
+
 export class CombatAudio {
   private options = new URLSearchParams(location.search);
   private projectileBuffers = new Map<Projectile, AudioBuffer>();
+  private cues = new Map<Cue, AudioBuffer>();
   private context?: AudioContext;
   private buffers = new Map<Hull, AudioBuffer>();
   private enabled = false;
@@ -180,6 +215,17 @@ export class CombatAudio {
     if (!buffer) {
       buffer = synthProjectile(context, kind);
       this.projectileBuffers.set(kind, buffer);
+    }
+    this.playBuffer(context, buffer, 1);
+  }
+
+  cue(kind: Cue) {
+    const context = this.context;
+    if (!this.enabled || context?.state !== "running") return;
+    let buffer = this.cues.get(kind);
+    if (!buffer) {
+      buffer = synthCue(context, kind);
+      this.cues.set(kind, buffer);
     }
     this.playBuffer(context, buffer, 1);
   }

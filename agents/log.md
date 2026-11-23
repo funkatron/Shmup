@@ -173,3 +173,17 @@ A 48-hit vector gunship takes over the city after four carrier passes. Its charg
 
 - [x] TypeScript, production build and simulated scene combat. Verified entry, three-shot attack, half-health transition, expanded fan, defeat and wave resumption.
 - [ ] Test attack readability and sustained aim on iPad with Lite 2.
+
+## 2026-11-23 · Encounter audio · PR #1
+
+Reviewed the [numbered sound-test catalog](https://chatgpt.com/library?file_id=libfile_bcb5557bfdf08191aa362ef727825738&account_id=personal) from Edward’s recording. These are original synthesized cues. The mappings describe our game design, rather than confirmed uses in M.U.S.H.A.
+
+| Event | Reference and adaptation |
+|---|---|
+| Collect chip | 022 stepped rise. Four short ascending pitches cut through firing. |
+| Launch two missiles | 004 falling whistle. One descending, gritty sweep per pair. |
+| Warden locks aim | 006 rising rush. Compress the climb to 610 ms inside the 650 ms warning. |
+| Incoming projectile hits fighter | 019 stubby low strike. One crunchy pulse per collision frame. |
+
+- [ ] Check warning audibility during held fire and pickup clarity on physical iPad speakers.
+- [x] TypeScript, production build, simulated Warden fight, and 48 kHz buffer checks for signal, peak level, reuse and mute.

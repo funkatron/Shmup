@@ -18,7 +18,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 
 Every other carrier pass mirrors the raider and both scout flights too. Tap **Sound off** once to enable combat audio. Scouts crack quickly and the carrier breaks up with a longer, lower thud. A red-orange and blue fringe briefly splits around each wreck. Tap **Sound on** to mute.
 
-To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship gives visual feedback and play continues.
+To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship flashes and makes a short, crunchy low strike. Play continues. A rising four-note chime marks chip collection, paired missiles launch with one falling whistle, and the Warden winds up audibly as its aim traces appear.
 
 ### Compare the parallax
 

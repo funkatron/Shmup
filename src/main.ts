@@ -151,6 +151,7 @@ class FlightScene extends Phaser.Scene {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
+        this.combatAudio.cue("pickup");
         this.weaponLevel = Math.min(4, this.weaponLevel + 1);
         this.positionPods();
         this.burst(this.chip.x, this.chip.y);
@@ -285,6 +286,7 @@ class FlightScene extends Phaser.Scene {
           this.missiles.set(shot, { age: 0, target, trail: this.add.graphics().setDepth(-1),
             points: [{ x: shot.x, y: shot.y, time: 0 }] });
         });
+        this.combatAudio.cue("missiles");
         this.missileCooldown = 0.84;
       }
       this.fireCooldown = 0.12;
@@ -314,6 +316,7 @@ class FlightScene extends Phaser.Scene {
     if (this.bossAge < this.nextFan - 0.65) return;
     if (!this.warned) {
       this.aim = Math.atan2(this.ship.y - this.boss.y - 16, this.ship.x - this.boss.x);
+      this.combatAudio.cue("charge");
       this.warned = true;
     }
     const count = this.bossHp <= 24 ? 5 : 3;
@@ -389,17 +392,22 @@ class FlightScene extends Phaser.Scene {
   }
 
   private updateEnemyShots(seconds: number) {
+    let playerHit = false;
     for (let i = this.enemyShots.length - 1; i >= 0; i--) {
       const { sprite, vx, vy } = this.enemyShots[i];
       sprite.x += vx * seconds;
       sprite.y += vy * seconds;
       const hit = Math.hypot(sprite.x - this.ship.x, sprite.y - this.ship.y) <= 8;
-      if (hit) this.burst(this.ship.x, this.ship.y);
+      if (hit) {
+        playerHit = true;
+        this.burst(this.ship.x, this.ship.y);
+      }
       if (hit || sprite.x < -9 || sprite.x > 369 || sprite.y < -9 || sprite.y > 489) {
         sprite.destroy();
         this.enemyShots.splice(i, 1);
       }
     }
+    if (playerHit) this.combatAudio.cue("playerHit");
   }
 }
 
