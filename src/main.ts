@@ -167,7 +167,7 @@ class FlightScene extends Phaser.Scene {
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
         this.stats.chips++;
         this.combatAudio.cue("pickup");
-        this.weaponLevel = Math.min(4, this.weaponLevel + 1);
+        this.weaponLevel++;
         this.positionPods();
         this.burst(this.chip.x, this.chip.y);
         this.chip.setVisible(false);
@@ -297,20 +297,29 @@ class FlightScene extends Phaser.Scene {
       for (const pod of this.pods) {
         if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setRotation(pod.rotation).setDepth(-1));
       }
-      if (this.weaponLevel === 4 && this.missileCooldown <= 0) {
-        const target = this.frontTarget(this.ship.x, this.ship.y);
-        this.pods.forEach((pod, index) => {
-          const shot = beam(this, pod.x, pod.y - 6, "missile").setRotation(index === 0 ? Math.PI / 4 : -Math.PI / 4);
-          this.shots.push(shot);
-          this.missiles.set(shot, { age: 0, target, trail: this.add.graphics().setDepth(-1),
-            points: [{ x: shot.x, y: shot.y, time: 0 }] });
-        });
+      if (this.weaponLevel >= 3 && this.missileCooldown <= 0) {
+        this.launchMissiles(this.weaponLevel - 2);
         this.combatAudio.cue("missiles");
         this.missileCooldown = 0.84;
       }
       this.stats.fired += this.shots.length - previousShots;
       this.fireCooldown = 0.12;
     }
+  }
+
+  private launchMissiles(pairs: number) {
+    const target = this.frontTarget(this.ship.x, this.ship.y);
+    this.pods.forEach((pod, index) => {
+      const outerAngle = index === 0 ? Math.PI / 4 : -Math.PI / 4;
+      for (let lane = 1; lane <= pairs; lane++) {
+        const shot = beam(this, pod.x, pod.y - 6, "missile").setRotation(outerAngle * lane / pairs);
+        this.shots.push(shot);
+        this.missiles.set(shot, {
+          age: 0, target, trail: this.add.graphics().setDepth(-1),
+          points: [{ x: shot.x, y: shot.y, time: 0 }],
+        });
+      }
+    });
   }
 
   private showStats() {
@@ -391,7 +400,7 @@ class FlightScene extends Phaser.Scene {
       const side = index === 0 ? 1 : -1;
       pod.setVisible(this.weaponLevel > index);
       pod.setPosition(Phaser.Math.Clamp(this.ship.x + side * 15, 4, 356), this.ship.y + 3);
-      pod.setRotation(this.weaponLevel >= 3 ? side * Math.PI / 15 : 0);
+      pod.setRotation(this.weaponLevel >= 2 ? side * Math.PI / 15 : 0);
     });
   }
 

@@ -13,12 +13,12 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |
 | Orange scouts | Five arc in from the left. Four faster scouts skim in from the right below them during the chip chase. Each takes one hit. Both flights clear before the next carrier pass. |
-| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Shoot it once, then fly through the pulsing green chip to equip a cyan wing pod on your right. Hold fire for two parallel bolts per volley. Chip two adds a matching left pod for three parallel bolts. Chip three angles the outer bolts outward by 12° while the center bolt stays straight. Chip four adds paired homing missiles while you hold fire. They flare outward at 45°, then arc inward with mint-green trails. The spread stays active. |
+| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Shoot it once, then fly through the pulsing green chip to equip a cyan wing pod on your right. Hold fire for two parallel bolts per volley. Chip two equips the left pod and immediately angles both outer bolts outward by 12°. Chip three adds a pair of homing missiles. Every further chip adds another missile from each pod, filling in the fan inside its 45° outer trails. The spread stays active. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
 Every other carrier pass mirrors the raider and both scout flights too. Sound starts enabled. If Safari waits for interaction, tap the playfield once. The sound button remembers your mute choice on this browser. Scouts crack quickly and the carrier breaks up with a longer, lower thud. A red-orange and blue fringe briefly splits around each wreck. Tap **Sound on** to mute.
 
-To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship flashes and makes a short, crunchy low strike. Play continues. A rising four-note chime marks chip collection, paired missiles launch with one falling whistle, and the Warden winds up audibly as its aim traces appear.
+To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship flashes and makes a short, crunchy low strike. Play continues. A rising four-note chime marks chip collection, each missile volley launches with one falling whistle, and the Warden winds up audibly as its aim traces appear.
 
 The pause panel counts individual bolts and missiles that hit out of all projectiles fired. Destroyed includes Wardens. Chips and incoming projectile hits count each contact. A new page load starts a fresh flight.
 

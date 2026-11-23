@@ -194,3 +194,10 @@ Sound defaults on and remembers an explicit mute. A playfield tap retries suspen
 
 - [x] TypeScript, production build and simulated audio/flight checks covered mute preference, gesture retry, two-projectile accuracy, pickup, kill, hit and pause/resume.
 - [ ] Check initial audio activation and pickup visibility on physical iPad with Lite 2.
+
+## 2026-11-23 · Earlier spread and growing missile volleys · PR #1
+
+Edward wanted chip two to unlock spread and every pickup after missile unlock to matter. Chip three equips the first missile pair. Each subsequent chip adds a left and right missile inside the 45° fan.
+
+- [x] Simulated pickups from zero through ten chips, checking spread angles, missile counts, unique launch lanes and projectile statistics. TypeScript and production build passed.
+- [ ] Check tracer readability and frame pacing with several missile pairs on the physical iPad.
