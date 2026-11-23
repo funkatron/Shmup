@@ -185,27 +185,48 @@ export class CombatAudio {
   private cues = new Map<Cue, AudioBuffer>();
   private context?: AudioContext;
   private buffers = new Map<Hull, AudioBuffer>();
-  private enabled = false;
+  private enabled = true;
+  private output?: GainNode;
 
-  async toggle() {
-    const button = document.querySelector<HTMLButtonElement>("#sound")!;
-    button.disabled = true;
+  attach(button: HTMLButtonElement) {
     try {
-      this.context ??= new AudioContext();
-      if (this.enabled && this.context.state === "running") {
-        await this.context.suspend();
-        this.enabled = false;
-      } else {
-        await this.context.resume();
-        this.enabled = true;
-      }
+      this.enabled = localStorage.getItem("shmup.muted") !== "true";
+    } catch { /* Storage is optional in embedded browsers. */ }
+
+    const sync = () => {
       button.textContent = this.enabled ? "Sound on" : "Sound off";
       button.setAttribute("aria-pressed", String(this.enabled));
-    } catch {
-      button.textContent = "Retry sound";
-    } finally {
-      button.disabled = false;
-    }
+      if (this.output) this.output.gain.value = Number(this.enabled);
+    };
+    const unlock = () => {
+      if (!this.enabled) return;
+      try {
+        if (!this.context) {
+          this.context = new AudioContext();
+          this.output = this.context.createGain();
+          this.output.connect(this.context.destination);
+        }
+        if (this.context.state !== "running") void this.context.resume().catch(() => {});
+      } catch { /* Retry on the next interaction if audio is unavailable. */ }
+    };
+    const gesture = (event: Event) => {
+      if (event.target !== button) unlock();
+    };
+    button.onclick = () => {
+      this.enabled = !this.enabled;
+      sync();
+      try { localStorage.setItem("shmup.muted", String(!this.enabled)); } catch {}
+      unlock();
+    };
+    sync();
+    unlock();
+    window.addEventListener("click", gesture, true);
+    window.addEventListener("keydown", gesture, true);
+    return () => {
+      button.onclick = null;
+      window.removeEventListener("click", gesture, true);
+      window.removeEventListener("keydown", gesture, true);
+    };
   }
 
   projectile(kind: Projectile) {
@@ -250,7 +271,7 @@ export class CombatAudio {
     const hit = context.createBufferSource();
     hit.buffer = buffer;
     hit.playbackRate.value = speed;
-    hit.connect(context.destination);
+    hit.connect(this.output!);
     hit.onended = () => hit.disconnect();
     hit.start();
   }

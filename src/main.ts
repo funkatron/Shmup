@@ -8,6 +8,8 @@ import { CombatAudio, fragments, type Hull } from "./impact";
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const flightSpeed = 210; // Logical pixels per second.
 
+const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 0, hitsTaken: 0 });
+
 class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
   private pods: Phaser.GameObjects.Image[] = [];
@@ -39,6 +41,7 @@ class FlightScene extends Phaser.Scene {
   private untilBoss = 40;
   private carrierTime = 0;
   private chipDrift = 0;
+  private stats = newFlightStats();
   private paused = false;
   private startWasHeld = false;
   private mirrored = false;
@@ -71,7 +74,12 @@ class FlightScene extends Phaser.Scene {
     this.ledgeScroll = 0;
     this.ledges = parallax ? Array.from({ length: 4 }, (_, i) =>
       beam(this, 180, i * 192 - 96, "ledges").setDepth(-1.5)) : [];
-    document.getElementById("sound")!.onclick = () => this.combatAudio.toggle();
+    const detachAudio = this.combatAudio.attach(document.querySelector<HTMLButtonElement>("#sound")!);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, detachAudio);
+    this.stats = newFlightStats();
+    this.paused = false;
+    this.startWasHeld = false;
+    this.showStats();
     this.target = beam(this, -12, 125, "raider");
     this.boss = beam(this, 180, -30, "warden").setVisible(false);
     this.bossMeter = this.add.graphics().setDepth(1);
@@ -79,6 +87,11 @@ class FlightScene extends Phaser.Scene {
     this.carrierTime = 0;
     this.carrier = beam(this, 370, 180, "carrier");
     this.chip = beam(this, 0, 0, "chip").setVisible(false);
+    this.chip.setAlpha(0.76);
+    this.tweens.add({
+      targets: this.chip, scale: this.chip.scaleX * 1.25, alpha: 1,
+      duration: 450, ease: "Sine.easeInOut", yoyo: true, repeat: -1,
+    });
     this.ship = beam(this, 180, 360, "fighter");
     this.missiles.clear();
     this.missileCooldown = 0;
@@ -97,6 +110,7 @@ class FlightScene extends Phaser.Scene {
     const startHeld = pad?.buttons[9]?.pressed ?? false;
     if (startHeld && !this.startWasHeld) {
       this.paused = !this.paused;
+      this.showStats();
       if (this.paused) this.tweens.pauseAll();
       else this.tweens.resumeAll();
     }
@@ -151,6 +165,7 @@ class FlightScene extends Phaser.Scene {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
+        this.stats.chips++;
         this.combatAudio.cue("pickup");
         this.weaponLevel = Math.min(4, this.weaponLevel + 1);
         this.positionPods();
@@ -199,6 +214,8 @@ class FlightScene extends Phaser.Scene {
       const hitCarrier = crosses(this.carrier, 16);
       const hitRaider = crosses(this.target, 12.5);
       const scout = this.scouts.find(({ sprite }) => crosses(sprite, 9));
+      const hit = Boolean(scout || hitBoss || hitCarrier || hitRaider);
+      if (hit) this.stats.hits++;
       if (scout) {
         scout.down = true;
         scout.sprite.setVisible(false);
@@ -207,6 +224,7 @@ class FlightScene extends Phaser.Scene {
         this.bossHp -= missile ? 3 : 1;
         this.boss.setTint(0xffdddd);
         if (this.bossHp <= 0) {
+          this.stats.wardens++;
           this.boss.setVisible(false);
           this.bossMeter.clear();
           this.explode(this.boss.x, this.boss.y, "carrier");
@@ -229,7 +247,7 @@ class FlightScene extends Phaser.Scene {
         this.target.setVisible(false);
         this.explode(this.target.x, this.target.y, "raider");
       }
-      if (scout || hitBoss || hitCarrier || hitRaider || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
+      if (hit || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
         missile?.trail.destroy();
         this.missiles.delete(shot);
         shot.destroy();
@@ -272,6 +290,7 @@ class FlightScene extends Phaser.Scene {
     if (length) this.positionPods();
 
     if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
+      const previousShots = this.shots.length;
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
@@ -289,8 +308,25 @@ class FlightScene extends Phaser.Scene {
         this.combatAudio.cue("missiles");
         this.missileCooldown = 0.84;
       }
+      this.stats.fired += this.shots.length - previousShots;
       this.fireCooldown = 0.12;
     }
+  }
+
+  private showStats() {
+    const panel = document.getElementById("stats")!;
+    panel.hidden = !this.paused;
+    if (!this.paused) return;
+    const { fired, hits, kills, wardens, chips, hitsTaken } = this.stats;
+    const accuracy = fired ? Math.round(100 * hits / fired) + "%" : "—";
+    panel.textContent = [
+      "FLIGHT STATS", "",
+      `Accuracy     ${accuracy} (${hits}/${fired})`,
+      `Destroyed    ${kills}`,
+      `Wardens      ${wardens}`,
+      `Chips        ${chips}`,
+      `Hits taken   ${hitsTaken}`,
+    ].join("\n");
   }
 
   private updateBoss(seconds: number) {
@@ -360,6 +396,7 @@ class FlightScene extends Phaser.Scene {
   }
 
   private explode(x: number, y: number, hull: Hull) {
+    this.stats.kills++;
     this.combatAudio.explosion(hull);
     this.burst(x, y);
     const count = fragments(hull);
@@ -399,6 +436,7 @@ class FlightScene extends Phaser.Scene {
       sprite.y += vy * seconds;
       const hit = Math.hypot(sprite.x - this.ship.x, sprite.y - this.ship.y) <= 8;
       if (hit) {
+        this.stats.hitsTaken++;
         playerHit = true;
         this.burst(this.ship.x, this.ship.y);
       }

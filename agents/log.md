@@ -187,3 +187,10 @@ Reviewed the [numbered sound-test catalog](https://chatgpt.com/library?file_id=l
 
 - [ ] Check warning audibility during held fire and pickup clarity on physical iPad speakers.
 - [x] TypeScript, production build, simulated Warden fight, and 48 kHz buffer checks for signal, peak level, reuse and mute.
+
+## 2026-11-23 · Flight feedback · PR #1
+
+Sound defaults on and remembers an explicit mute. A playfield tap retries suspended audio on browsers that gate playback. Start opens a fixed pause overlay with projectile accuracy, total kills, Wardens, chips and incoming hits. A pickup grows 25% and brightens over half of its 900 ms cycle. Its collision radius remains 13 logical pixels.
+
+- [x] TypeScript, production build and simulated audio/flight checks covered mute preference, gesture retry, two-projectile accuracy, pickup, kill, hit and pause/resume.
+- [ ] Check initial audio activation and pickup visibility on physical iPad with Lite 2.
