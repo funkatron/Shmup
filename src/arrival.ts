@@ -12,7 +12,7 @@ const outlines = [[0,1,2,3,4,5,6,7,8,0], [9,10,11,9], [9,12,10], [12,11],
 export function drawArrival(g: Phaser.GameObjects.Graphics, fraction: number) {
   const t = fraction * fraction * (3 - 2 * fraction);
   const yaw = (1 - t) * Math.PI / 2, pitch = 0.08 + t * (Math.PI / 2 - 0.08);
-  const scale = 1 + 12 * (1 - t) ** 2;
+  const scale = 1.3 + 12 * (1 - t) ** 2;
   const points = vertices.map(([x, y, z]) => {
     const across = x * Math.cos(yaw) + y * Math.sin(yaw);
     const along = y * Math.cos(yaw) - x * Math.sin(yaw);

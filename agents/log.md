@@ -318,3 +318,10 @@ The demo opens with a marked carrier pass. Cannon fire destroys it, the guide ri
 
 - [x] Simulated the encounter at 10, 16.67, 33.33 and 50 ms per update. Verified all three captions, one chip pickup, cannon L2, a second firing lane and handoff to steering. TypeScript and production build passed.
 - [ ] Check guide-ring readability on physical iPad.
+
+## 2026-11-24 · Drone targeting and fighter scale · PR #1
+
+The fighter renders at 130% scale with the same gameplay hit radius. Drone travel and Roll angular speed dropped by 25%. Each drone keeps a distinct visible target until it is lost. Violet rings show drone assignments. Defensive beams intercept hostile projectiles. Extra drones hold fire until a target becomes available.
+
+- [x] TypeScript, production build, pickup-demo regression and simulated drone motion, stable distinct locks, ring count, defensive projectile selection and removal.
+- [ ] Judge violet ring visibility alongside missile brackets on iPad.

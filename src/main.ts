@@ -47,6 +47,7 @@ class FlightScene extends Phaser.Scene {
   private cannonLevel = 1;
   private missileLevel = 0;
   private actors: Phaser.GameObjects.Image[] = [];
+  private droneLocks = new Map<Phaser.GameObjects.Image, Phaser.GameObjects.Image>();
   private drones: (Phaser.GameObjects.Image & { hp: number; contacts: Set<Phaser.GameObjects.Image> })[] = [];
   private reserves = 0;
   private formation = 0;
@@ -137,6 +138,7 @@ class FlightScene extends Phaser.Scene {
     });
     this.actors = [this.boss, this.carrier, this.frigate, this.target, ...this.scouts.map(s => s.sprite)];
     this.ship = beam(this, 180, 360, "fighter");
+    this.ship.setScale(this.ship.scaleX * 1.3);
     this.missiles.clear();
     this.lockColors.clear();
     this.lockOverlay = this.add.graphics().setDepth(0.5);
@@ -144,6 +146,7 @@ class FlightScene extends Phaser.Scene {
     this.cannonLevel = 1;
     this.missileLevel = 0;
     this.drones = [];
+    this.droneLocks.clear();
     this.reserves = 0;
     this.formation = this.orbit = 0;
     this.formationHeld = false;
@@ -341,10 +344,16 @@ class FlightScene extends Phaser.Scene {
     }
     this.beamCooldown = Math.max(0, this.beamCooldown - seconds);
     if (this.drones.length && this.beamCooldown <= 0) {
-      for (const drone of this.drones) this.fireBeam(drone);
-      this.stats.fired += this.drones.length;
-      this.combatAudio.projectile("beam");
-      this.beamCooldown = 0.32;
+      let fired = 0;
+      for (const drone of this.drones) {
+        const target = this.droneLocks.get(drone);
+        if (target?.visible && this.fireBeam(drone, target)) fired++;
+      }
+      if (fired) {
+        this.stats.fired += fired;
+        this.combatAudio.projectile("beam");
+        this.beamCooldown = 0.32;
+      }
     }
     if (!this.demo && !pad && !this.pointer) {
       this.drawLocks();
@@ -536,9 +545,12 @@ class FlightScene extends Phaser.Scene {
     }
   }
 
-  private fireBeam(drone: Phaser.GameObjects.Image) {
-    const dx = Math.sin(drone.rotation) * 600, dy = -Math.cos(drone.rotation) * 600;
-    const hit = this.firstHit(drone.x, drone.y, dx, dy);
+  private fireBeam(drone: Phaser.GameObjects.Image, target: Phaser.GameObjects.Image) {
+    const dx = target.x - drone.x, dy = target.y - drone.y;
+    const defensive = formations[this.formation] === "Defensive";
+    const incoming = defensive ? this.enemyShots.findIndex(shot => shot.sprite === target) : -1;
+    if (defensive && incoming < 0) return false;
+    const hit = defensive ? undefined : this.firstHit(drone.x, drone.y, dx, dy);
     const end = hit?.fraction ?? 1;
     const trace = this.add.graphics();
     for (const [width, color, alpha] of [[3, 0xbd75ff, 0.25], [1, 0xefceff, 1]]) {
@@ -546,7 +558,12 @@ class FlightScene extends Phaser.Scene {
       trace.lineBetween(drone.x, drone.y, drone.x + dx * end, drone.y + dy * end);
     }
     this.tweens.add({ targets: trace, alpha: 0, duration: 110, onComplete: () => trace.destroy() });
-    if (hit) this.damageEnemy(hit.actor, 1);
+    if (incoming >= 0) {
+      this.enemyShots.splice(incoming, 1);
+      target.destroy();
+      this.stats.hits++;
+    } else if (hit) this.damageEnemy(hit.actor, 1);
+    return true;
   }
 
   private deployDrone() {
@@ -562,6 +579,7 @@ class FlightScene extends Phaser.Scene {
       return;
     }
     this.drones.splice(index, 1);
+    this.droneLocks.delete(drone);
     drone.destroy();
     if (this.reserves > 0) {
       this.reserves--;
@@ -571,15 +589,35 @@ class FlightScene extends Phaser.Scene {
 
   private updateDrones(seconds: number) {
     if (!this.drones.length) return;
-    this.orbit += seconds * 3;
+    this.orbit += seconds * 2.25;
     const enemies = this.actors.filter(a => a.visible && a.x >= 0 && a.x <= 360 && a.y >= 0 && a.y <= 480);
     const mode = formations[this.formation], count = this.drones.length;
+    const available = new Set(mode === "Defensive"
+      ? this.enemyShots.map(shot => shot.sprite).filter(a => a.visible && a.x >= 0 && a.x <= 360 && a.y >= 0 && a.y <= 480)
+      : enemies);
+    for (const [drone, target] of this.droneLocks) {
+      if (!available.delete(target)) this.droneLocks.delete(drone);
+    }
+    for (const drone of this.drones) {
+      if (this.droneLocks.has(drone)) continue;
+      let best: Phaser.GameObjects.Image | undefined;
+      let range = Infinity;
+      for (const target of available) {
+        const from = mode === "Defensive" ? this.ship : drone;
+        const distance = Math.hypot(target.x - from.x, target.y - from.y);
+        if (distance < range) { best = target; range = distance; }
+      }
+      if (best) {
+        this.droneLocks.set(drone, best);
+        available.delete(best);
+      }
+    }
     for (let i = count - 1; i >= 0; i--) {
       const drone = this.drones[i];
       const lane = i - (count - 1) / 2;
       let x = this.ship.x + lane * 18, y = this.ship.y - 30, angle = 0;
-      if (mode === "Free" && enemies.length) {
-        const target = enemies.reduce((a,b) => Math.hypot(a.x-drone.x,a.y-drone.y) <= Math.hypot(b.x-drone.x,b.y-drone.y) ? a : b);
+      const target = this.droneLocks.get(drone);
+      if (mode === "Free" && target) {
         x = target.x + lane * 16;
         y = target.y + 44;
         angle = Math.atan2(target.x - drone.x, drone.y - target.y);
@@ -596,8 +634,9 @@ class FlightScene extends Phaser.Scene {
         y = this.ship.y - 27 * Math.cos(angle);
       }
       const dx = Phaser.Math.Clamp(x, 5, 355) - drone.x, dy = Phaser.Math.Clamp(y, 5, 475) - drone.y;
-      const step = Math.min(1, seconds * 310 / (Math.hypot(dx, dy) || 1));
+      const step = Math.min(1, seconds * 232.5 / (Math.hypot(dx, dy) || 1));
       drone.setPosition(drone.x + dx * step, drone.y + dy * step).setRotation(angle);
+      if (target) drone.setRotation(Math.atan2(target.x - drone.x, drone.y - target.y));
       for (const actor of drone.contacts) {
         if (!enemies.includes(actor) || Math.abs(drone.x - actor.x) > this.halfWidth(actor) + 3
             || Math.abs(drone.y - actor.y) > 13) drone.contacts.delete(actor);
@@ -781,6 +820,12 @@ class FlightScene extends Phaser.Scene {
 
   private drawLocks() {
     this.lockOverlay.clear();
+    this.lockOverlay.lineStyle(1, 0xdf9eff, 0.95);
+    for (const target of this.droneLocks.values()) {
+      if (!target.visible || target.active === false) continue;
+      const radius = formations[this.formation] === "Defensive" ? 6 : this.halfWidth(target) + 3;
+      this.lockOverlay.strokeEllipse(target.x, target.y, radius * 2, Math.min(28, radius * 2));
+    }
     const active = new Set<Phaser.GameObjects.Image>();
     for (const [shot, { target }] of this.missiles) {
       shot.setTint(this.lockColor(target));
