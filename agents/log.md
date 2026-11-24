@@ -220,3 +220,12 @@ Edward had no controller available. Holding the canvas fires, and dragging from 
 
 - [x] TypeScript, production build and simulated controller-free firing, half-speed steering, cancellation and pause/resume.
 - [ ] Physical iPad Safari touch feel and audio unlock.
+
+## 2026-11-24 · Crossing fire over the city · PR #1
+
+Sampled frames across Edward’s 16-second [M.U.S.H.A. reference](https://youtu.be/mYg2Bt4L1go?t=540) and the official Steam trailers for [Ikaruga](https://store.steampowered.com/app/253750/), [DoDonPachi Resurrection](https://store.steampowered.com/app/464450/) and [Crimzon Clover](https://store.steampowered.com/app/1718160/). The clip shows the fighter sweeping beneath a bridge and incoming fire. Ikaruga’s opening formation, the repeated projectile lanes in DoDonPachi, and Crimzon Clover’s multi-target lock-on sequences informed our second pair of crossing flights.
+
+The ten-second pass now sends 20 scouts in four formations. Leaders aim one three-way fan each and withhold fire inside 90 logical pixels. Late flights cross at different heights while the frigate is active. The Warden telegraphs five rounds, then seven below half hull (including the half-hull threshold). Its warning still lasts 650 ms.
+
+- [x] TypeScript and production build. Simulated a full untouched pass, 20 scout entries, 16 hostile projectiles, the boss transition, both boss fans and one-finger steering/fire.
+- [ ] Judge pickup readability and missile-heavy frame pacing on physical iPad.

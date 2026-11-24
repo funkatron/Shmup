@@ -13,7 +13,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |
-| Orange scouts | Five arc in from the left. Four faster scouts skim in from the right below them during the chip chase. Each takes one hit. Both flights clear before the next carrier pass. |
+| Orange scouts | Four formations cross each carrier pass. Each leader can fire a three-shot fan. Destroy the leader early to cancel its volley. Two higher formations arrive alongside the frigate in the second half. |
 | Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Shoot it once, then fly through the pulsing green chip to equip a cyan wing pod on your right. Hold fire for two parallel bolts per volley. Chip two equips the left pod and immediately angles both outer bolts outward by 12°. Chip three adds a pair of homing missiles. Every further chip adds another missile from each pod, filling in the fan inside its 45° outer trails. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. The spread stays active. |
 | Coral twin-tube frigate | Crosses above the raider and launches two pink missiles aimed at your position. Sidestep after launch to dodge. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
@@ -66,4 +66,4 @@ See the [power-up design study](docs/power-ups.md) for the next carrier experime
 
 Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
 
-The **Warden** enters after 40 seconds and takes over the arena. Its hull meter sits above its wings. Short pink traces announce an aimed three-shot fan. At half hull the fan widens to five. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the starter gun](https://funkatron.github.io/Shmup/?encounter=boss).
+The **Warden** enters after 40 seconds and takes over the arena. Its hull meter sits above its wings. Short pink traces announce an aimed five-shot fan. At half hull the fan widens to five. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the starter gun](https://funkatron.github.io/Shmup/?encounter=boss).

@@ -25,7 +25,7 @@ class FlightScene extends Phaser.Scene {
   private farBanks: Phaser.GameObjects.Image[] = [];
   private city?: City;
   private farScroll = 0;
-  private scouts: { entry: number; fromRight: boolean; sprite: Phaser.GameObjects.Image; down: boolean }[] = [];
+  private scouts: { entry: number; fromRight: boolean; leader: boolean; altitude: number; sprite: Phaser.GameObjects.Image; down: boolean }[] = [];
   private bridge!: Phaser.GameObjects.Image;
   private shots: Phaser.GameObjects.Image[] = [];
   private target!: Phaser.GameObjects.Image;
@@ -61,12 +61,15 @@ class FlightScene extends Phaser.Scene {
     this.farScroll = 0;
     this.farBanks = parallax ? Array.from({ length: 4 }, (_, i) =>
       beam(this, 180, i * 192 - 96, "folds").setDepth(-3)) : [];
-    const flight = (count: number, fromRight: boolean, start: number, spacing: number) =>
+    const flight = (count: number, fromRight: boolean, start: number, spacing: number, altitude = 0) =>
       Array.from({ length: count }, (_, i) => ({
-        entry: start + spacing * i, fromRight, down: false,
+        entry: start + spacing * i, fromRight, altitude, leader: i === 0, down: false,
         sprite: beam(this, 0, 0, "scout").setFlipX(fromRight).setVisible(false),
       }));
-    this.scouts = [...flight(4, true, 2.55, 0.29), ...flight(5, false, 0.85, 0.38)];
+    this.scouts = [
+      ...flight(5, false, 0.60, 0.30), ...flight(4, true, 2.05, 0.24),
+      ...flight(6, false, 5.10, 0.20, -58), ...flight(5, true, 6.45, 0.22, -52),
+    ];
     this.marks = Array.from({ length: 5 }, (_, i) =>
       beam(this, 180, i * 128 - 64, "canyon").setDepth(-2));
     this.bridge = beam(this, 180, this.marks[1].y, "bridge").setDepth(-2);
@@ -152,7 +155,7 @@ class FlightScene extends Phaser.Scene {
       if (this.frigate.visible && lastWaveTime < 6 && this.carrierTime >= 6) this.fireFrigateMissiles();
       this.target.x = fieldX(-12 + 96 * passTime);
       this.carrier.x = fieldX(370 - 76 * this.carrierTime);
-      this.scouts.forEach(({ sprite, down, entry, fromRight }) => {
+      this.scouts.forEach(({ sprite, down, entry, fromRight, altitude, leader }) => {
         const age = this.carrierTime - entry;
         const progress = -16 + (fromRight ? 148 : 102) * age;
         sprite.setVisible(!down && age >= 0 && progress <= 376);
@@ -160,7 +163,19 @@ class FlightScene extends Phaser.Scene {
         const arc = Math.sin(Math.PI * progress / 360);
         sprite.setFlipX(fromRight !== this.mirrored);
         sprite.setPosition(fieldX(fromRight ? 360 - progress : progress),
-          fromRight ? 300 - 24 * arc : 211 + 42 * arc);
+          altitude + (fromRight ? 300 - 24 * arc : 211 + 42 * arc));
+        // One fan per formation. A close pass gives the fighter room to escape.
+        if (leader && age >= 1.20 && lastWaveTime < entry + 1.20 &&
+            Math.hypot(sprite.x - this.ship.x, sprite.y - this.ship.y) >= 90) {
+          const aim = Math.atan2(this.ship.y - sprite.y, this.ship.x - sprite.x);
+          this.combatAudio.projectile("incoming");
+          for (const offset of [-0.34, 0, 0.34]) {
+            this.enemyShots.push({
+              sprite: beam(this, sprite.x, sprite.y, "incoming"),
+              vx: 120 * Math.cos(aim + offset), vy: 120 * Math.sin(aim + offset),
+            });
+          }
+        }
       });
     }
     if (this.chip.visible) {
@@ -426,7 +441,7 @@ class FlightScene extends Phaser.Scene {
       this.combatAudio.cue("charge");
       this.warned = true;
     }
-    const count = this.bossHp <= 24 ? 5 : 3;
+    const count = this.bossHp <= 24 ? 7 : 5;
     for (let i = 0; i < count; i++) {
       const angle = this.aim + (i - (count - 1) / 2) * 0.24;
       const dx = Math.cos(angle), dy = Math.sin(angle);
@@ -438,7 +453,7 @@ class FlightScene extends Phaser.Scene {
     }
     if (this.bossAge >= this.nextFan) {
       this.combatAudio.projectile("incoming");
-      this.nextFan += this.bossHp <= 24 ? 1.55 : 2.05;
+      this.nextFan += this.bossHp <= 24 ? 1.40 : 1.85;
       this.warned = false;
     }
   }
