@@ -151,6 +151,9 @@ const cueProfiles = {
   pickup: { start: 480, end: 960, seconds: 0.34, gain: 0.14, steps: 4, grit: 0 },
   missiles: { start: 920, end: 170, seconds: 0.25, gain: 0.13, steps: 0, grit: 0.48 },
   charge: { start: 190, end: 820, seconds: 0.61, gain: 0.15, steps: 0, grit: 0.13 },
+  wingCrack: { start: 740, end: 210, seconds: 0.19, gain: 0.28, steps: 0, grit: 0.73 },
+  wingBreach: { start: 460, end: 145, seconds: 0.32, gain: 0.29, steps: 3, grit: 0.54 },
+  coreRupture: { start: 330, end: 85, seconds: 0.49, gain: 0.30, steps: 0, grit: 0.38 },
   playerHit: { start: 240, end: 95, seconds: 0.17, gain: 0.24, steps: 0, grit: 0.58 },
 } as const;
 

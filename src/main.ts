@@ -7,7 +7,12 @@ import { CombatAudio, fragments, type Hull } from "./impact";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const wardenMaxHp = 96;
-const wardenTextures = ["warden", "warden-cracked", "warden-breached", "warden-critical"];
+const wardenStages = [
+  { texture: "warden", cue: null },
+  { texture: "warden-cracked", cue: "wingCrack" },
+  { texture: "warden-breached", cue: "wingBreach" },
+  { texture: "warden-critical", cue: "coreRupture" },
+] as const;
 const flightSpeed = 210; // Logical pixels per second.
 
 const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 0, hitsTaken: 0 });
@@ -244,7 +249,12 @@ class FlightScene extends Phaser.Scene {
         this.bossHp -= missile ? 3 : 1;
         if (this.bossHp > 0) {
           const stage = Math.floor(4 * (1 - this.bossHp / wardenMaxHp));
-          this.boss.setTexture(wardenTextures[stage]).setTint(0xffdddd);
+          const { texture, cue } = wardenStages[stage];
+          if (this.boss.texture.key !== texture) {
+            this.boss.setTexture(texture);
+            if (cue) this.combatAudio.cue(cue);
+          }
+          this.boss.setTint(0xffdddd);
         }
         if (this.bossHp <= 0) {
           this.stats.wardens++;

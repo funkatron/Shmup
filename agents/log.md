@@ -236,3 +236,10 @@ Doubled the hull from 48 to 96 HP. Each quarter lost replaces intact vector pane
 
 - [x] TypeScript, production build and simulated 96 bolt hits, including all damage stages, defeat and a fresh hull on re-entry.
 - [ ] Check damage readability during sustained fire on physical iPad.
+
+## 2026-11-24 · Audible Warden damage · PR #1
+
+Edward confirmed the hull damage is visible. Each change of hull texture now triggers a cached sound through the existing mute control. The wing crack is short and noisy, the second breach descends in steps, and the core rupture has the longest low-mid tail.
+
+- [x] TypeScript, production build and simulated full fight. Sustained bolt hits triggered exactly three damage cues at 72, 48 and 24 HP.
+- [ ] Audition the transitions over sustained fire on physical iPad speakers.
