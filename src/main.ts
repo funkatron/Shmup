@@ -16,6 +16,7 @@ const wardenStages = [
 const flightSpeed = 210; // Logical pixels per second.
 
 const maxWeaponLevel = 4;
+const formations = ["Ahead", "Free", "Defensive", "Roll", "Spread"] as const;
 const dropOrder = ["cannon", "missile", "double"] as const;
 
 const missileTrailSeconds = 0.50;
@@ -35,9 +36,12 @@ class FlightScene extends Phaser.Scene {
   private nextHue = 0.44;
   private cannonLevel = 1;
   private missileLevel = 0;
-  private doubleLevel = 0;
-  private double!: Phaser.GameObjects.Image;
-  private doubleCooldown = 0;
+  private actors: Phaser.GameObjects.Image[] = [];
+  private drones: Phaser.GameObjects.Image[] = [];
+  private formation = 0;
+  private orbit = 0;
+  private formationHeld = false;
+  private beamCooldown = 0;
   private dropIndex = 0;
   private status = document.getElementById("controller")!;
 
@@ -120,16 +124,20 @@ class FlightScene extends Phaser.Scene {
       targets: this.chip, scale: this.chip.scaleX * 1.25, alpha: 1,
       duration: 450, ease: "Sine.easeInOut", yoyo: true, repeat: -1,
     });
+    this.actors = [this.boss, this.carrier, this.frigate, this.target, ...this.scouts.map(s => s.sprite)];
     this.ship = beam(this, 180, 360, "fighter");
     this.missiles.clear();
     this.lockColors.clear();
     this.lockOverlay = this.add.graphics().setDepth(0.5);
     this.missileCooldown = 0;
     this.cannonLevel = 1;
-    this.missileLevel = this.doubleLevel = 0;
+    this.missileLevel = 0;
+    this.drones = [];
+    this.formation = this.orbit = 0;
+    this.formationHeld = false;
     this.dropIndex = 0;
-    this.doubleCooldown = this.fireCooldown = this.cannonVolley = 0;
-    this.double = beam(this, this.ship.x, this.ship.y + 18, "double").setVisible(false);
+    this.beamCooldown = this.fireCooldown = this.cannonVolley = 0;
+
     this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod"));
     this.positionPods();
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
@@ -145,6 +153,9 @@ class FlightScene extends Phaser.Scene {
     const startHeld = pad?.buttons[9]?.pressed ?? false;
     if (startHeld && !this.startWasHeld) this.togglePause();
     this.startWasHeld = startHeld;
+    const xHeld = !!pad?.buttons[3]?.pressed;
+    if (xHeld && !this.formationHeld && !this.paused) this.cycleFormation();
+    this.formationHeld = xHeld;
     const message = this.paused ? "Paused" : pad ? "Controller detected" : "Hold to fire · Drag to steer";
     if (message !== this.status.textContent) this.status.textContent = message;
     if (this.paused) return;
@@ -216,8 +227,9 @@ class FlightScene extends Phaser.Scene {
           case "chip-cannon": this.cannonLevel = Math.min(maxWeaponLevel, this.cannonLevel + 1); break;
           case "chip-missile": this.missileLevel = Math.min(maxWeaponLevel, this.missileLevel + 1); break;
           case "chip-double":
-            if (!this.doubleLevel) this.double.setPosition(this.ship.x, this.ship.y + 18).setVisible(true);
-            this.doubleLevel = Math.min(maxWeaponLevel, this.doubleLevel + 1);
+            if (this.drones.length < maxWeaponLevel) {
+              this.drones.push(beam(this, this.ship.x, this.ship.y - 12, "double"));
+            }
             break;
         }
         this.positionPods();
@@ -258,71 +270,8 @@ class FlightScene extends Phaser.Scene {
           missile.trail.lineBetween(a.x, a.y, b.x, b.y);
         }
       }
-      const crosses = (actor: Phaser.GameObjects.Image, halfWidth: number) => {
-        if (!actor.visible) return false;
-        // Intersect the entire frame of travel with the hit box, including sideways flight.
-        let enter = 0, leave = 1;
-        const clip = (start: number, end: number, center: number, radius: number) => {
-          if (start === end) return Math.abs(start - center) <= radius;
-          const a = (center - radius - start) / (end - start);
-          const b = (center + radius - start) / (end - start);
-          enter = Math.max(enter, Math.min(a, b));
-          leave = Math.min(leave, Math.max(a, b));
-          return enter <= leave;
-        };
-        return clip(previousX, shot.x, actor.x, halfWidth) && clip(previousY, shot.y, actor.y, 12);
-      };
-      const hitBoss = crosses(this.boss, 43);
-      const hitCarrier = crosses(this.carrier, 16);
-      const hitFrigate = crosses(this.frigate, 15);
-      const hitRaider = crosses(this.target, 12.5);
-      const scout = this.scouts.find(({ sprite }) => crosses(sprite, 9));
-      const hit = Boolean(scout || hitBoss || hitCarrier || hitRaider || hitFrigate);
-      if (hit) this.stats.hits++;
-      if (scout) {
-        scout.down = true;
-        scout.sprite.setVisible(false);
-        this.explode(scout.sprite.x, scout.sprite.y, "scout");
-      } else if (hitBoss) {
-        this.bossHp -= missile ? 3 : 1;
-        if (this.bossHp > 0) {
-          const stage = Math.floor(4 * (1 - this.bossHp / wardenMaxHp));
-          const { texture, cue } = wardenStages[stage];
-          if (this.boss.texture.key !== texture) {
-            this.boss.setTexture(texture);
-            if (cue) this.combatAudio.cue(cue);
-          }
-          this.boss.setTint(0xffdddd);
-        }
-        if (this.bossHp <= 0) {
-          this.stats.wardens++;
-          this.boss.setVisible(false);
-          this.bossMeter.clear();
-          this.explode(this.boss.x, this.boss.y, "carrier");
-          this.burst(this.boss.x - 31, this.boss.y);
-          this.burst(this.boss.x + 31, this.boss.y);
-          for (const shot of this.enemyShots) shot.sprite.destroy();
-          this.enemyShots = [];
-          this.carrierTime = 0;
-          this.carrier.setVisible(true);
-          this.target.setVisible(true);
-          for (const scout of this.scouts) scout.down = false;
-          this.untilBoss = 40;
-        }
-      } else if (hitCarrier) {
-        this.carrier.setVisible(false);
-        this.explode(this.carrier.x, this.carrier.y, "carrier");
-        this.chip.setTexture("chip-" + dropOrder[this.dropIndex]);
-        this.dropIndex = (this.dropIndex + 1) % dropOrder.length;
-        this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
-        this.chipDrift = this.chip.x < 180 ? 20 : -20;
-      } else if (hitFrigate) {
-        this.frigate.setVisible(false);
-        this.explode(this.frigate.x, this.frigate.y, "raider");
-      } else if (hitRaider) {
-        this.target.setVisible(false);
-        this.explode(this.target.x, this.target.y, "raider");
-      }
+      const hit = this.firstHit(previousX, previousY, shot.x - previousX, shot.y - previousY);
+      if (hit) this.damageEnemy(hit.actor, missile ? 3 : 1);
       if (hit || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
         missile?.trail.destroy();
         this.missiles.delete(shot);
@@ -330,6 +279,7 @@ class FlightScene extends Phaser.Scene {
         this.shots.splice(i, 1);
       }
     }
+    this.updateDrones(seconds);
     this.updateEnemyShots(seconds);
     if (this.target.visible && previousTime < 1.0 && passTime >= 1.0) {
       const angle = Math.atan2(this.ship.y - this.target.y, this.ship.x - this.target.x);
@@ -346,12 +296,7 @@ class FlightScene extends Phaser.Scene {
     } else {
       this.fireCooldown = this.cannonVolley = 0;
     }
-    this.doubleCooldown = Math.max(0, this.doubleCooldown - seconds);
-    if (this.double.visible) {
-      const follow = 1 - Math.exp(-6 * seconds);
-      this.double.x += (this.ship.x - this.double.x) * follow;
-      this.double.y += (Math.min(474, this.ship.y + 18) - this.double.y) * follow;
-    }
+    this.beamCooldown = Math.max(0, this.beamCooldown - seconds);
     if (!pad && !this.pointer) {
       this.drawLocks();
       return;
@@ -400,13 +345,144 @@ class FlightScene extends Phaser.Scene {
       this.combatAudio.projectile("missiles");
       this.missileCooldown = 0.84;
     }
-    if ((this.pointer || pad?.buttons[1]?.pressed) && this.doubleLevel && this.doubleCooldown <= 0) {
-      this.shots.push(beam(this, this.double.x, this.double.y - 8, "double-bolt"));
-      this.combatAudio.projectile("bolt");
-      this.doubleCooldown = 0.32 - 0.06 * (this.doubleLevel - 1);
+    if ((this.pointer || pad?.buttons[1]?.pressed) && this.drones.length && this.beamCooldown <= 0) {
+      for (const drone of this.drones) this.fireBeam(drone);
+      this.stats.fired += this.drones.length;
+      this.combatAudio.projectile("beam");
+      this.beamCooldown = 0.32;
     }
     this.stats.fired += this.shots.length - previousShots;
     this.drawLocks();
+  }
+
+  private cycleFormation() {
+    this.formation = (this.formation + 1) % formations.length;
+    document.getElementById("formation")!.textContent = formations[this.formation];
+  }
+
+  private halfWidth(actor: Phaser.GameObjects.Image) {
+    if (actor === this.boss) return 43;
+    if (actor === this.carrier || actor === this.frigate) return 16;
+    return actor === this.target ? 12.5 : 9;
+  }
+
+  private firstHit(x: number, y: number, dx: number, dy: number) {
+    let nearest: { actor: Phaser.GameObjects.Image; fraction: number } | undefined;
+    for (const actor of this.actors) {
+      if (!actor.visible) continue;
+      let enter = 0, leave = 1;
+      const clip = (offset: number, delta: number, radius: number) => {
+        if (!delta) return Math.abs(offset) <= radius;
+        const a = (offset - radius) / delta, b = (offset + radius) / delta;
+        enter = Math.max(enter, Math.min(a, b));
+        leave = Math.min(leave, Math.max(a, b));
+        return enter <= leave;
+      };
+      if (clip(actor.x - x, dx, this.halfWidth(actor)) && clip(actor.y - y, dy, 12)
+          && (!nearest || enter < nearest.fraction)) nearest = { actor, fraction: enter };
+    }
+    return nearest;
+  }
+
+  private damageEnemy(actor: Phaser.GameObjects.Image, damage: number) {
+    this.stats.hits++;
+    const scout = this.scouts.find(s => s.sprite === actor);
+    if (scout) {
+      scout.down = true;
+      scout.sprite.setVisible(false);
+      this.explode(scout.sprite.x, scout.sprite.y, "scout");
+    } else if (actor === this.boss) {
+      this.bossHp -= damage;
+      if (this.bossHp > 0) {
+        const stage = Math.floor(4 * (1 - this.bossHp / wardenMaxHp));
+        const { texture, cue } = wardenStages[stage];
+        if (this.boss.texture.key !== texture) {
+          this.boss.setTexture(texture);
+          if (cue) this.combatAudio.cue(cue);
+        }
+        this.boss.setTint(0xffdddd);
+      }
+      if (this.bossHp <= 0) {
+        this.stats.wardens++;
+        this.boss.setVisible(false);
+        this.bossMeter.clear();
+        this.explode(this.boss.x, this.boss.y, "carrier");
+        this.burst(this.boss.x - 31, this.boss.y);
+        this.burst(this.boss.x + 31, this.boss.y);
+        for (const shot of this.enemyShots) shot.sprite.destroy();
+        this.enemyShots = [];
+        this.carrierTime = 0;
+        this.carrier.setVisible(true);
+        this.target.setVisible(true);
+        for (const scout of this.scouts) scout.down = false;
+        this.untilBoss = 40;
+      }
+    } else if (actor === this.carrier) {
+      this.carrier.setVisible(false);
+      this.explode(this.carrier.x, this.carrier.y, "carrier");
+      this.chip.setTexture("chip-" + dropOrder[this.dropIndex]);
+      this.dropIndex = (this.dropIndex + 1) % dropOrder.length;
+      this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
+      this.chipDrift = this.chip.x < 180 ? 20 : -20;
+    } else if (actor === this.frigate) {
+      this.frigate.setVisible(false);
+      this.explode(this.frigate.x, this.frigate.y, "raider");
+    } else if (actor === this.target) {
+      this.target.setVisible(false);
+      this.explode(this.target.x, this.target.y, "raider");
+    }
+  }
+
+  private fireBeam(drone: Phaser.GameObjects.Image) {
+    const dx = Math.sin(drone.rotation) * 600, dy = -Math.cos(drone.rotation) * 600;
+    const hit = this.firstHit(drone.x, drone.y, dx, dy);
+    const end = hit?.fraction ?? 1;
+    const trace = this.add.graphics();
+    for (const [width, color, alpha] of [[3, 0xbd75ff, 0.25], [1, 0xefceff, 1]]) {
+      trace.lineStyle(width, color, alpha);
+      trace.lineBetween(drone.x, drone.y, drone.x + dx * end, drone.y + dy * end);
+    }
+    this.tweens.add({ targets: trace, alpha: 0, duration: 110, onComplete: () => trace.destroy() });
+    if (hit) this.damageEnemy(hit.actor, 1);
+  }
+
+  private loseDrone(index: number) {
+    const [drone] = this.drones.splice(index, 1);
+    this.burst(drone.x, drone.y);
+    drone.destroy();
+  }
+
+  private updateDrones(seconds: number) {
+    if (!this.drones.length) return;
+    this.orbit += seconds * 3;
+    const enemies = this.actors.filter(a => a.visible && a.x >= 0 && a.x <= 360 && a.y >= 0 && a.y <= 480);
+    const mode = formations[this.formation], count = this.drones.length;
+    for (let i = count - 1; i >= 0; i--) {
+      const drone = this.drones[i];
+      const lane = i - (count - 1) / 2;
+      let x = this.ship.x + lane * 18, y = this.ship.y - 30, angle = 0;
+      if (mode === "Free" && enemies.length) {
+        const target = enemies.reduce((a,b) => Math.hypot(a.x-drone.x,a.y-drone.y) <= Math.hypot(b.x-drone.x,b.y-drone.y) ? a : b);
+        x = target.x + lane * 16;
+        y = target.y + 44;
+        angle = Math.atan2(target.x - drone.x, drone.y - target.y);
+      } else if (mode === "Defensive") {
+        x = this.ship.x + lane * 20;
+        y = this.ship.y - 17;
+      } else if (mode === "Roll") {
+        angle = this.orbit + i * 2 * Math.PI / count;
+        x = this.ship.x + Math.sin(angle) * 32;
+        y = this.ship.y - Math.cos(angle) * 32;
+      } else if (mode === "Spread") {
+        angle = [-1,1,-3,3][i] * Math.PI / 4;
+        x = this.ship.x + 27 * Math.sin(angle);
+        y = this.ship.y - 27 * Math.cos(angle);
+      }
+      const dx = Phaser.Math.Clamp(x, 5, 355) - drone.x, dy = Phaser.Math.Clamp(y, 5, 475) - drone.y;
+      const step = Math.min(1, seconds * 310 / (Math.hypot(dx, dy) || 1));
+      drone.setPosition(drone.x + dx * step, drone.y + dy * step).setRotation(angle);
+      if (enemies.some(a => Math.abs(drone.x-a.x) <= this.halfWidth(a)+3 && Math.abs(drone.y-a.y) <= 13)) this.loseDrone(i);
+    }
   }
 
   private fireFrigateMissiles() {
@@ -442,6 +518,9 @@ class FlightScene extends Phaser.Scene {
     const pause = document.getElementById("pause")!;
     const listeners = new AbortController();
     const options = { signal: listeners.signal };
+    const selector = document.getElementById("formation")!;
+    selector.textContent = formations[0];
+    selector.addEventListener("click", () => { if (!this.paused) this.cycleFormation(); }, options);
     const release = (event: PointerEvent) => {
       if (this.pointer?.id === event.pointerId) this.pointer = undefined;
     };
@@ -490,7 +569,7 @@ class FlightScene extends Phaser.Scene {
       `Destroyed    ${kills}`,
       `Wardens      ${wardens}`,
       `Chips        ${chips}`,
-      `Cannon ${this.cannonLevel}/4  Missiles ${this.missileLevel}/4  Double ${this.doubleLevel}/4`,
+      `Cannon ${this.cannonLevel}/4  Missiles ${this.missileLevel}/4  Drones ${this.drones.length}/4`,
       `Hits taken   ${hitsTaken}`,
     ].join("\n");
   }
@@ -642,6 +721,14 @@ class FlightScene extends Phaser.Scene {
       const { sprite, vx, vy } = this.enemyShots[i];
       sprite.x += vx * seconds;
       sprite.y += vy * seconds;
+      const radius = formations[this.formation] === "Defensive" ? 15 : 7;
+      const intercept = this.drones.findIndex(d => Math.hypot(d.x-sprite.x, d.y-sprite.y) <= radius);
+      if (intercept >= 0) {
+        this.loseDrone(intercept);
+        sprite.destroy();
+        this.enemyShots.splice(i, 1);
+        continue;
+      }
       const hit = Math.hypot(sprite.x - this.ship.x, sprite.y - this.ship.y) <= 8;
       if (hit) {
         this.stats.hitsTaken++;

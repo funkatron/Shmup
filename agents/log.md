@@ -290,3 +290,10 @@ Holding B or the playfield fires four straight cannon volleys and skips the next
 
 - [x] TypeScript and production build. Simulated volleys at steps 0–3, 6–9 and 12 at all four levels, plus a fresh touch trigger after release.
 - [ ] Judge burst rhythm on physical iPad.
+
+## 2026-11-24 · Beam drone formations · PR #1
+
+Each violet chip adds or replaces one drone up to four. The SN30 Pro right face button fires one short beam per surviving drone. X or the on-screen formation button cycles Ahead, Free, Defensive, Roll and Spread. Free pursues and aims while the player controls the trigger. Defensive widens the interception radius. Any drone struck by an enemy hull or projectile is lost.
+
+- [x] TypeScript and production build. Simulated the pickup cap, replacements, X edge detection and wraparound, five formation behaviors, nearest beam impact, defensive interception, enemy contact and firing once per surviving drone.
+- [ ] Check beam visibility in a crowded wave and test the controls on a physical SN30 Pro.

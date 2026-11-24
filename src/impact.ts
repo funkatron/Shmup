@@ -121,7 +121,7 @@ function addEcho(context: AudioContext, source: AudioBuffer, speed: number) {
   return result;
 }
 
-type Projectile = "bolt" | "missiles" | "incoming";
+type Projectile = "beam" | "bolt" | "missiles" | "incoming";
 
 function synthPlayerWeapon(context: AudioContext, kind: "bolt" | "missiles") {
   const cannon = kind === "bolt";
@@ -155,8 +155,9 @@ function synthPlayerWeapon(context: AudioContext, kind: "bolt" | "missiles") {
 }
 
 function synthProjectile(context: AudioContext, kind: Projectile) {
-  if (kind !== "incoming") return synthPlayerWeapon(context, kind);
-  const start = 390, end = 1180, seconds = 0.21, gain = 0.14;
+  if (kind === "bolt" || kind === "missiles") return synthPlayerWeapon(context, kind);
+  const start = kind === "beam" ? 1650 : 390, end = kind === "beam" ? 520 : 1180;
+  const seconds = kind === "beam" ? 0.14 : 0.21, gain = 0.14;
   const buffer = context.createBuffer(1, Math.ceil(seconds * context.sampleRate), context.sampleRate);
   const samples = buffer.getChannelData(0);
   let phase = 0;
