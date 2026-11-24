@@ -250,3 +250,13 @@ Player bolts use a short crushed-noise crack over a low impact. Missile launches
 
 - [x] TypeScript and production build, synthesized buffers and cache reuse, simulated three-pair launch angles, acceleration to cruise and trail history.
 - [ ] Judge cannon/engine balance and bloom visibility on iPad during continuous fire.
+
+## 2026-11-24 · Five-chip start and first-tap sound · PR #1
+
+Edward requested the equipment from five chips and reported that sound required an off/on cycle. Both wing pods now start in firing position with three-way cannon fire and six homing missiles. The next pickup adds two more missiles. The flight counter records chips picked up during play.
+
+The sound button shows **Enable sound** while the audio context is suspended. Tapping the playfield or that button retries playback and starts a silent sample during the gesture. A saved mute still takes effect on reload. [MDN Web Audio autoplay guidance](https://developer.mozilla.org/en-US/docs/Web/Media/Guides/Autoplay#autoplay_using_the_web_audio_api)
+
+- [x] TypeScript and production build passed. Simulated the first volley and a real pickup through the flight update loop. Confirmed three bolts, six then eight missiles, and zero then one chip collected.
+- [x] Simulated suspended audio on startup, unlock by touch or sound button, cannon playback, saved mute, and listener cleanup.
+- [ ] Confirm audible first fire on iPad Safari and the Lite 2 after a fresh load. Local Chromium could not launch because its process socket was unavailable.

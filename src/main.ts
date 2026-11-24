@@ -27,7 +27,7 @@ class FlightScene extends Phaser.Scene {
     age: number; target?: Phaser.GameObjects.Image; trail: Phaser.GameObjects.Graphics;
     points: { x: number; y: number; time: number }[];
   }>();
-  private weaponLevel = 0;
+  private weaponLevel!: number;
   private status = document.getElementById("controller")!;
 
   private marks: Phaser.GameObjects.Image[] = [];
@@ -111,8 +111,9 @@ class FlightScene extends Phaser.Scene {
     this.ship = beam(this, 180, 360, "fighter");
     this.missiles.clear();
     this.missileCooldown = 0;
-    this.weaponLevel = 0;
-    this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod").setVisible(false));
+    this.weaponLevel = 5;
+    this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod"));
+    this.positionPods();
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     document.getElementById("build")!.textContent = [
       `v${version}  ·  ${commit}  ·  ${flightSpeed} px/s`,

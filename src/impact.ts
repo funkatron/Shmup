@@ -223,11 +223,17 @@ export class CombatAudio {
     } catch { /* Storage is optional in embedded browsers. */ }
 
     const sync = () => {
-      button.textContent = this.enabled ? "Sound on" : "Sound off";
-      button.setAttribute("aria-pressed", String(this.enabled));
+      const playing = this.enabled && this.context?.state === "running";
+      button.textContent = !this.enabled ? "Sound off" : playing ? "Sound on" : "Enable sound";
+      button.setAttribute("aria-pressed", String(playing));
       if (this.output) this.output.gain.value = Number(this.enabled);
     };
-    const unlock = () => {
+    let primed = false;
+    const stateChanged = () => {
+      if (this.context?.state !== "running") primed = false;
+      sync();
+    };
+    const unlock = (fromGesture: boolean) => {
       if (!this.enabled) return;
       try {
         if (!this.context) {
@@ -235,26 +241,42 @@ export class CombatAudio {
           this.output = this.context.createGain();
           this.output.connect(this.context.destination);
         }
-        if (this.context.state !== "running") void this.context.resume().catch(() => {});
-      } catch { /* Retry on the next interaction if audio is unavailable. */ }
+        const context = this.context;
+        context.onstatechange = stateChanged;
+        if (context.state !== "running") void context.resume().then(sync, sync);
+        if (fromGesture && (!primed || context.state !== "running")) {
+          // Start a silent source inside the input handler, before the first game tick.
+          const source = context.createBufferSource();
+          source.buffer = context.createBuffer(1, 1, context.sampleRate);
+          source.connect(this.output!);
+          source.onended = () => source.disconnect();
+          source.start();
+          primed = true;
+        }
+      } catch { /* Retry on the next interaction. */ }
+      sync();
     };
     const gesture = (event: Event) => {
-      if (event.target !== button) unlock();
+      if (event.target !== button && (!primed || this.context?.state !== "running")) unlock(true);
     };
     button.onclick = () => {
+      if (this.enabled && this.context?.state !== "running") {
+        unlock(true);
+        return;
+      }
       this.enabled = !this.enabled;
-      sync();
       try { localStorage.setItem("shmup.muted", String(!this.enabled)); } catch {}
-      unlock();
+      sync();
+      unlock(true);
     };
     sync();
-    unlock();
-    window.addEventListener("click", gesture, true);
-    window.addEventListener("keydown", gesture, true);
+    unlock(false);
+    const inputs = ["pointerdown", "pointerup", "touchend", "click", "keydown"];
+    for (const input of inputs) window.addEventListener(input, gesture, true);
     return () => {
       button.onclick = null;
-      window.removeEventListener("click", gesture, true);
-      window.removeEventListener("keydown", gesture, true);
+      if (this.context) this.context.onstatechange = null;
+      for (const input of inputs) window.removeEventListener(input, gesture, true);
     };
   }
 
