@@ -37,7 +37,8 @@ class FlightScene extends Phaser.Scene {
   private cannonLevel = 1;
   private missileLevel = 0;
   private actors: Phaser.GameObjects.Image[] = [];
-  private drones: Phaser.GameObjects.Image[] = [];
+  private drones: (Phaser.GameObjects.Image & { hp: number; contacts: Set<Phaser.GameObjects.Image> })[] = [];
+  private reserves = 0;
   private formation = 0;
   private orbit = 0;
   private formationHeld = false;
@@ -133,6 +134,7 @@ class FlightScene extends Phaser.Scene {
     this.cannonLevel = 1;
     this.missileLevel = 0;
     this.drones = [];
+    this.reserves = 0;
     this.formation = this.orbit = 0;
     this.formationHeld = false;
     this.dropIndex = 0;
@@ -223,12 +225,14 @@ class FlightScene extends Phaser.Scene {
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
         this.stats.chips++;
         this.combatAudio.cue("pickup");
-        switch (this.chip.texture.key) {
+        if (this.cannonLevel === maxWeaponLevel && this.missileLevel === maxWeaponLevel && this.drones.length === maxWeaponLevel) {
+          this.reserves++;
+        } else switch (this.chip.texture.key) {
           case "chip-cannon": this.cannonLevel = Math.min(maxWeaponLevel, this.cannonLevel + 1); break;
           case "chip-missile": this.missileLevel = Math.min(maxWeaponLevel, this.missileLevel + 1); break;
           case "chip-double":
             if (this.drones.length < maxWeaponLevel) {
-              this.drones.push(beam(this, this.ship.x, this.ship.y - 12, "double"));
+              this.deployDrone();
             }
             break;
         }
@@ -297,6 +301,12 @@ class FlightScene extends Phaser.Scene {
       this.fireCooldown = this.cannonVolley = 0;
     }
     this.beamCooldown = Math.max(0, this.beamCooldown - seconds);
+    if (this.drones.length && this.beamCooldown <= 0) {
+      for (const drone of this.drones) this.fireBeam(drone);
+      this.stats.fired += this.drones.length;
+      this.combatAudio.projectile("beam");
+      this.beamCooldown = 0.32;
+    }
     if (!pad && !this.pointer) {
       this.drawLocks();
       return;
@@ -330,9 +340,11 @@ class FlightScene extends Phaser.Scene {
 
     const previousShots = this.shots.length;
     if (cannonHeld && this.fireCooldown <= 0.000001) {
-      const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
+      const barrels = this.cannonLevel === maxWeaponLevel ? [-4, 4] : [0];
+      for (const offset of barrels) {
+        this.shots.push(beam(this, this.ship.x + offset, this.ship.y - 15, "bolt").setDepth(-1));
+      }
       this.combatAudio.projectile("bolt");
-      this.shots.push(shot.setDepth(-1));
       for (const pod of this.pods) {
         if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setDepth(-1));
       }
@@ -344,12 +356,6 @@ class FlightScene extends Phaser.Scene {
       this.launchMissiles(this.missileLevel);
       this.combatAudio.projectile("missiles");
       this.missileCooldown = 0.84;
-    }
-    if ((this.pointer || pad?.buttons[1]?.pressed) && this.drones.length && this.beamCooldown <= 0) {
-      for (const drone of this.drones) this.fireBeam(drone);
-      this.stats.fired += this.drones.length;
-      this.combatAudio.projectile("beam");
-      this.beamCooldown = 0.32;
     }
     this.stats.fired += this.shots.length - previousShots;
     this.drawLocks();
@@ -446,10 +452,24 @@ class FlightScene extends Phaser.Scene {
     if (hit) this.damageEnemy(hit.actor, 1);
   }
 
-  private loseDrone(index: number) {
-    const [drone] = this.drones.splice(index, 1);
+  private deployDrone() {
+    const sprite = beam(this, this.ship.x, this.ship.y - 12, "double");
+    this.drones.push(Object.assign(sprite, { hp: 3, contacts: new Set<Phaser.GameObjects.Image>() }));
+  }
+
+  private damageDrone(index: number) {
+    const drone = this.drones[index];
     this.burst(drone.x, drone.y);
+    if (--drone.hp > 0) {
+      drone.setTint(drone.hp === 2 ? 0xffccaa : 0xff8877);
+      return;
+    }
+    this.drones.splice(index, 1);
     drone.destroy();
+    if (this.reserves > 0) {
+      this.reserves--;
+      this.deployDrone();
+    }
   }
 
   private updateDrones(seconds: number) {
@@ -481,7 +501,17 @@ class FlightScene extends Phaser.Scene {
       const dx = Phaser.Math.Clamp(x, 5, 355) - drone.x, dy = Phaser.Math.Clamp(y, 5, 475) - drone.y;
       const step = Math.min(1, seconds * 310 / (Math.hypot(dx, dy) || 1));
       drone.setPosition(drone.x + dx * step, drone.y + dy * step).setRotation(angle);
-      if (enemies.some(a => Math.abs(drone.x-a.x) <= this.halfWidth(a)+3 && Math.abs(drone.y-a.y) <= 13)) this.loseDrone(i);
+      for (const actor of drone.contacts) {
+        if (!enemies.includes(actor) || Math.abs(drone.x - actor.x) > this.halfWidth(actor) + 3
+            || Math.abs(drone.y - actor.y) > 13) drone.contacts.delete(actor);
+      }
+      for (const actor of enemies) {
+        if (drone.contacts.has(actor) || Math.abs(drone.x - actor.x) > this.halfWidth(actor) + 3
+            || Math.abs(drone.y - actor.y) > 13) continue;
+        drone.contacts.add(actor);
+        this.damageDrone(i);
+        if (drone.hp === 0) break;
+      }
     }
   }
 
@@ -570,6 +600,7 @@ class FlightScene extends Phaser.Scene {
       `Wardens      ${wardens}`,
       `Chips        ${chips}`,
       `Cannon ${this.cannonLevel}/4  Missiles ${this.missileLevel}/4  Drones ${this.drones.length}/4`,
+      `Reserve drones  ${this.reserves}`,
       `Hits taken   ${hitsTaken}`,
     ].join("\n");
   }
@@ -724,7 +755,7 @@ class FlightScene extends Phaser.Scene {
       const radius = formations[this.formation] === "Defensive" ? 15 : 7;
       const intercept = this.drones.findIndex(d => Math.hypot(d.x-sprite.x, d.y-sprite.y) <= radius);
       if (intercept >= 0) {
-        this.loseDrone(intercept);
+        this.damageDrone(intercept);
         sprite.destroy();
         this.enemyShots.splice(i, 1);
         continue;

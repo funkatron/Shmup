@@ -297,3 +297,10 @@ Each violet chip adds or replaces one drone up to four. The SN30 Pro right face 
 
 - [x] TypeScript and production build. Simulated the pickup cap, replacements, X edge detection and wraparound, five formation behaviors, nearest beam impact, defensive interception, enemy contact and firing once per surviving drone.
 - [ ] Check beam visibility in a crowded wave and test the controls on a physical SN30 Pro.
+
+## 2026-11-24 · Four cannon lanes and reserve drones · PR #1
+
+L4 adds a fourth straight bolt with the existing four-volley cadence. Drones fire automatically every 320 ms, absorb three distinct impacts, and change tint as they take damage. Sustained contact with a single enemy hull counts once. Once cannon and missiles reach L4 and four drones are active, any chip banks one spare. A loss immediately launches one full-health replacement. Pause shows reserves.
+
+- [x] TypeScript and production build. Simulated four straight lanes, firing without input, three-hit destruction, continuous contact, all three excess chip types, reserve deployment and flight reset.
+- [ ] Playtest the four-lane spacing and defensive formation on iPad.
