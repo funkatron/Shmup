@@ -15,6 +15,8 @@ const wardenStages = [
 ] as const;
 const flightSpeed = 210; // Logical pixels per second.
 
+const missileTrailSeconds = 0.50;
+
 const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 0, hitsTaken: 0 });
 
 class FlightScene extends Phaser.Scene {
@@ -207,7 +209,7 @@ class FlightScene extends Phaser.Scene {
       const missile = this.missiles.get(shot);
       if (missile) {
         missile.age += seconds;
-        if (missile.age >= 0.14) {
+        if (missile.age >= 0.28) {
           if (!missile.target?.visible || missile.target.y >= shot.y || missile.target.x < 0 || missile.target.x > 360) {
             missile.target = this.frontTarget(shot.x, shot.y);
           }
@@ -216,16 +218,17 @@ class FlightScene extends Phaser.Scene {
           shot.rotation += Phaser.Math.Clamp(heading - shot.rotation, -4.5 * seconds, 4.5 * seconds);
         }
       }
-      const travel = (missile ? 300 : 420) * seconds;
+      const speed = missile ? Math.min(480, 145 + 440 * missile.age) : 420;
+      const travel = speed * seconds;
       shot.x += Math.sin(shot.rotation) * travel;
       shot.y -= Math.cos(shot.rotation) * travel;
       if (missile) {
         missile.points.push({ x: shot.x, y: shot.y, time: missile.age });
-        while (missile.points.length && missile.points[0].time < missile.age - 0.24) missile.points.shift();
+        while (missile.points.length && missile.points[0].time < missile.age - missileTrailSeconds) missile.points.shift();
         missile.trail.clear();
         for (let j = 1; j < missile.points.length; j++) {
           const a = missile.points[j - 1], b = missile.points[j];
-          missile.trail.lineStyle(1, 0x80ffca, 0.65 * (1 - (missile.age - a.time) / 0.24));
+          missile.trail.lineStyle(1, 0x80ffca, 0.65 * (1 - (missile.age - a.time) / missileTrailSeconds));
           missile.trail.lineBetween(a.x, a.y, b.x, b.y);
         }
       }
@@ -339,7 +342,7 @@ class FlightScene extends Phaser.Scene {
       }
       if (this.weaponLevel >= 3 && this.missileCooldown <= 0) {
         this.launchMissiles(this.weaponLevel - 2);
-        this.combatAudio.cue("missiles");
+        this.combatAudio.projectile("missiles");
         this.missileCooldown = 0.84;
       }
       this.stats.fired += this.shots.length - previousShots;
@@ -359,10 +362,13 @@ class FlightScene extends Phaser.Scene {
   }
 
   private launchMissiles(pairs: number) {
+    const outerDegrees = Math.min(75, 45 + 7 * (pairs - 1));
+    const laneSpacing = (outerDegrees - 45) / Math.max(1, pairs - 1);
     this.pods.forEach((pod, index) => {
-      const outerAngle = index === 0 ? Math.PI / 4 : -Math.PI / 4;
+      const side = index === 0 ? 1 : -1;
       for (let lane = 1; lane <= pairs; lane++) {
-        const shot = beam(this, pod.x, pod.y - 6, "missile").setRotation(outerAngle * lane / pairs);
+        const angle = side * (45 + laneSpacing * (lane - 1)) * Math.PI / 180;
+        const shot = beam(this, pod.x, pod.y - 6, "missile").setRotation(angle);
         this.shots.push(shot);
         this.missiles.set(shot, {
           age: 0, target: this.frontTarget(shot.x, shot.y), trail: this.add.graphics().setDepth(-1),

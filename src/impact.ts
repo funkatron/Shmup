@@ -121,15 +121,42 @@ function addEcho(context: AudioContext, source: AudioBuffer, speed: number) {
   return result;
 }
 
-type Projectile = "bolt" | "incoming";
+type Projectile = "bolt" | "missiles" | "incoming";
 
-const projectileProfiles = {
-  bolt: { start: 1680, end: 640, seconds: 0.065, gain: 0.095 },
-  incoming: { start: 390, end: 1180, seconds: 0.21, gain: 0.14 },
-};
+function synthPlayerWeapon(context: AudioContext, kind: "bolt" | "missiles") {
+  const cannon = kind === "bolt";
+  const duration = cannon ? 0.105 : 0.54;
+  const rate = context.sampleRate;
+  const buffer = context.createBuffer(1, Math.ceil(duration * rate), rate);
+  const samples = buffer.getChannelData(0);
+  let phase = 0, exhaust = 0, held = 0, nextLatch = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / rate;
+    const u = t / duration;
+    if (i >= nextLatch) {
+      held = Math.round((2 * Math.random() - 1) * 15) / 15;
+      nextLatch += rate / 8000;
+    }
+    if (cannon) {
+      phase += 2 * Math.PI * (105 + 180 * Math.exp(-100 * t)) / rate;
+      const report = 0.23 * Math.sin(phase) * Math.exp(-38 * t);
+      const crack = 0.28 * held * Math.exp(-90 * t);
+      samples[i] = (report + crack) * Math.min(1, t / 0.0015, (duration - t) / 0.009);
+    } else {
+      // The exhaust brightens and the turbine rises under the rushing noise.
+      exhaust += (1 - Math.exp(-2 * Math.PI * (450 + 2200 * u) / rate)) * (held - exhaust);
+      phase += 2 * Math.PI * (145 + 680 * u) / rate;
+      const turbine = 0.055 * (Math.sin(phase) + 0.3 * Math.sin(2 * phase));
+      const envelope = Math.min(1, t / 0.035) * (1 - u * u) ** 2;
+      samples[i] = envelope * (0.28 * exhaust + turbine);
+    }
+  }
+  return buffer;
+}
 
 function synthProjectile(context: AudioContext, kind: Projectile) {
-  const { start, end, seconds, gain } = projectileProfiles[kind];
+  if (kind !== "incoming") return synthPlayerWeapon(context, kind);
+  const start = 390, end = 1180, seconds = 0.21, gain = 0.14;
   const buffer = context.createBuffer(1, Math.ceil(seconds * context.sampleRate), context.sampleRate);
   const samples = buffer.getChannelData(0);
   let phase = 0;
@@ -149,7 +176,6 @@ function synthProjectile(context: AudioContext, kind: Projectile) {
 // sample rate, generated on first use through the existing sound switch.
 const cueProfiles = {
   pickup: { start: 480, end: 960, seconds: 0.34, gain: 0.14, steps: 4, grit: 0 },
-  missiles: { start: 920, end: 170, seconds: 0.25, gain: 0.13, steps: 0, grit: 0.48 },
   charge: { start: 190, end: 820, seconds: 0.61, gain: 0.15, steps: 0, grit: 0.13 },
   wingCrack: { start: 740, end: 210, seconds: 0.19, gain: 0.28, steps: 0, grit: 0.73 },
   wingBreach: { start: 460, end: 145, seconds: 0.32, gain: 0.29, steps: 3, grit: 0.54 },

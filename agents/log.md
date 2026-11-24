@@ -243,3 +243,10 @@ Edward confirmed the hull damage is visible. Each change of hull texture now tri
 
 - [x] TypeScript, production build and simulated full fight. Sustained bolt hits triggered exactly three damage cues at 72, 48 and 24 HP.
 - [ ] Audition the transitions over sustained fire on physical iPad speakers.
+
+## 2026-11-24 · Cannon and accelerating missile volleys · PR #1
+
+Player bolts use a short crushed-noise crack over a low impact. Missile launches use a half-second rising turbine and brightening exhaust, once per salvo. Missiles begin at 145 logical px/s, gain 440 px/s each second to a 480 px/s ceiling, coast outward for 0.28 s and keep 0.50 s of trail. Extra pairs open the fan by 7° per side up to 75°, then fill intermediate lanes.
+
+- [x] TypeScript and production build, synthesized buffers and cache reuse, simulated three-pair launch angles, acceleration to cruise and trail history.
+- [ ] Judge cannon/engine balance and bloom visibility on iPad during continuous fire.

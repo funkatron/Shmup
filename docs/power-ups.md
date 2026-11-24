@@ -12,6 +12,6 @@ Weapon choice changes which part of the screen the player controls. Power Wave g
 
 The first green chip equips one hollow vector wing pod. The pod adds an offset bolt on the existing fire cadence. Make the extra firing lane narrow enough that the player still needs to aim. Keep the bullet sound to one cue per volley. With a carrier every ten seconds, requiring three clean pickups before hearing or seeing a weapon change would leave much of a short playtest empty.
 
-The second chip equips the left pod and immediately tips both pods outward by 12°. Chip three adds two homing missiles to the spread. Each later chip adds one missile per pod, giving four missiles at chip four and six at chip five. Additional lanes fill the space inside the original 45° launches. Each volley shares one launch sound and the existing 0.84-second cooldown.
+The second chip equips the left pod and immediately tips both pods outward by 12°. Chip three adds two homing missiles to the spread. Each later chip adds one missile per pod, giving four missiles at chip four and six at chip five. Each extra pair opens the outer launch angle by 7° up to 75°. Missiles coast outward for 0.28 seconds before homing, accelerate from 145 to 480 logical pixels per second and leave a half-second mint trail. Each volley shares one launch sound and the existing 0.84-second cooldown.
 
 During a crossing wave, try clearing a scout with an outside lane while keeping the center bolt trained on the carrier. On iPad, check whether the wider gaps still leave the incoming magenta round easy to track.
