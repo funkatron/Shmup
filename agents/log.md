@@ -229,3 +229,10 @@ The ten-second pass now sends 20 scouts in four formations. Leaders aim one thre
 
 - [x] TypeScript and production build. Simulated a full untouched pass, 20 scout entries, 16 hostile projectiles, the boss transition, both boss fans and one-finger steering/fire.
 - [ ] Judge pickup readability and missile-heavy frame pacing on physical iPad.
+
+## 2026-11-24 · Warden hull damage · PR #1
+
+Doubled the hull from 48 to 96 HP. Each quarter lost replaces intact vector panels with persistent jagged traces, first on the left wing, then the right, then the core. The meter retains twelve segments and the seven-round attack begins at half hull.
+
+- [x] TypeScript, production build and simulated 96 bolt hits, including all damage stages, defeat and a fresh hull on re-entry.
+- [ ] Check damage readability during sustained fire on physical iPad.

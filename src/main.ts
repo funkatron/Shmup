@@ -6,6 +6,8 @@ import { prepareTraces, beam } from "./beam";
 import { CombatAudio, fragments, type Hull } from "./impact";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
+const wardenMaxHp = 96;
+const wardenTextures = ["warden", "warden-cracked", "warden-breached", "warden-critical"];
 const flightSpeed = 210; // Logical pixels per second.
 
 const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 0, hitsTaken: 0 });
@@ -240,7 +242,10 @@ class FlightScene extends Phaser.Scene {
         this.explode(scout.sprite.x, scout.sprite.y, "scout");
       } else if (hitBoss) {
         this.bossHp -= missile ? 3 : 1;
-        this.boss.setTint(0xffdddd);
+        if (this.bossHp > 0) {
+          const stage = Math.floor(4 * (1 - this.bossHp / wardenMaxHp));
+          this.boss.setTexture(wardenTextures[stage]).setTint(0xffdddd);
+        }
         if (this.bossHp <= 0) {
           this.stats.wardens++;
           this.boss.setVisible(false);
@@ -416,9 +421,9 @@ class FlightScene extends Phaser.Scene {
 
   private updateBoss(seconds: number) {
     if (!this.boss.visible) {
-      this.boss.setPosition(180, -30).setVisible(true);
+      this.boss.setTexture("warden").setPosition(180, -30).setVisible(true);
       this.frigate.setVisible(false);
-      this.bossHp = 48;
+      this.bossHp = wardenMaxHp;
       this.bossAge = 0;
       this.nextFan = 2.5;
       this.warned = false;
@@ -431,7 +436,7 @@ class FlightScene extends Phaser.Scene {
     this.boss.y = Math.min(85, -30 + this.bossAge * 75);
     this.boss.x = 180 + 99 * Math.sin(this.bossAge * 0.82);
     const g = this.bossMeter.clear();
-    for (let i = 0; i < Math.ceil(this.bossHp / 4); i++) {
+    for (let i = 0; i < Math.ceil(12 * this.bossHp / wardenMaxHp); i++) {
       g.lineStyle(2, 0xff996e, 0.9).lineBetween(this.boss.x - 29 + i*5, this.boss.y - 28,
         this.boss.x - 26 + i*5, this.boss.y - 28);
     }
@@ -441,7 +446,7 @@ class FlightScene extends Phaser.Scene {
       this.combatAudio.cue("charge");
       this.warned = true;
     }
-    const count = this.bossHp <= 24 ? 7 : 5;
+    const count = this.bossHp <= wardenMaxHp / 2 ? 7 : 5;
     for (let i = 0; i < count; i++) {
       const angle = this.aim + (i - (count - 1) / 2) * 0.24;
       const dx = Math.cos(angle), dy = Math.sin(angle);
@@ -453,7 +458,7 @@ class FlightScene extends Phaser.Scene {
     }
     if (this.bossAge >= this.nextFan) {
       this.combatAudio.projectile("incoming");
-      this.nextFan += this.bossHp <= 24 ? 1.40 : 1.85;
+      this.nextFan += this.bossHp <= wardenMaxHp / 2 ? 1.40 : 1.85;
       this.warned = false;
     }
   }
