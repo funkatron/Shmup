@@ -201,3 +201,15 @@ Edward wanted chip two to unlock spread and every pickup after missile unlock to
 
 - [x] Simulated pickups from zero through ten chips, checking spread angles, missile counts, unique launch lanes and projectile statistics. TypeScript and production build passed.
 - [ ] Check tracer readability and frame pacing with several missile pairs on the physical iPad.
+
+## 2026-11-24 · Independent missile locks · PR #1
+
+Each missile selects from its own position at launch and when it loses its lock. Prioritize enemies with the fewest active locks, then distance. Keep valid locks through the turn.
+
+- [x] TypeScript and production build. Simulated six launches across three scouts, an empty field and four launches against a lone Warden.
+- [ ] Check split tracer paths during a scout crossing on iPad with the Lite 2.
+
+A coral twin-tube frigate crosses each ten-second wave. Its pink missiles snapshot the fighter position at launch and use the straight enemy-projectile movement path. The frigate can be destroyed or acquired by friendly missiles.
+
+- [x] TypeScript, production build and simulated twin launch with a subsequent fighter sidestep.
+- [ ] Playtest the dodge during a carrier pass on iPad.
