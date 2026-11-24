@@ -7,15 +7,16 @@
   <style>
     body { margin: 0; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr); background: black; color: #b9d6de; }
     header { padding: 6px 10px; font: 12px/1.35 monospace; }
-    #sound { float: right; width: 8em; min-height: 32px; font: inherit; background: #102128; color: inherit; border: 1px solid #506970; }
+    #sound, #pause { float: right; width: 8em; min-height: 32px; font: inherit; background: #102128; color: inherit; border: 1px solid #506970; }
     #build { white-space: pre-line; }
     #flight { min-height: 0; overflow: hidden; }
     #stats { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; padding: 1em 1.4em; background: #060d12; color: #acf5df; border: 1px solid #65a99d; font: 15px/1.6 monospace; pointer-events: none; }
-    canvas { display: block; }
+    #pause { width: 5em; }
+    canvas { touch-action: none; display: block; }
   </style>
 </head>
 <body>
-  <header><button id="sound" type="button" aria-pressed="true">Sound on</button><div id="controller">Press a controller button</div><div id="build"></div></header>
+  <header><button id="sound" type="button" aria-pressed="true">Sound on</button><button id="pause" type="button">Pause</button><div id="controller">Hold to fire · Drag to steer</div><div id="build"></div></header>
   <main id="flight"></main>
   <pre id="stats" aria-label="Flight statistics" hidden></pre>
   <script type="module" src="/src/main.ts"></script>

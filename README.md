@@ -8,6 +8,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 
 | Control or cue | What it does |
 |---|---|
+| Touch and hold the playfield | Fires continuously. Drag away from the initial touch to steer. A shorter drag moves more slowly. Lift to stop, then touch anywhere to recenter. Tap Pause for flight stats. |
 | D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |
 | Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |

@@ -43,6 +43,7 @@ class FlightScene extends Phaser.Scene {
   private carrierTime = 0;
   private chipDrift = 0;
   private stats = newFlightStats();
+  private pointer?: { id: number; originX: number; originY: number; x: number; y: number };
   private paused = false;
   private startWasHeld = false;
   private mirrored = false;
@@ -53,6 +54,7 @@ class FlightScene extends Phaser.Scene {
   private fireCooldown = 0;
 
   create() {
+    this.bindPointer();
     prepareTraces(this);
     const parallax = new URLSearchParams(location.search).get("parallax") !== "off";
     this.city = parallax ? new City(this) : undefined;
@@ -110,16 +112,9 @@ class FlightScene extends Phaser.Scene {
     const pads = navigator.getGamepads?.() ?? [];
     const pad = Array.from(pads).find(controller => controller?.connected);
     const startHeld = pad?.buttons[9]?.pressed ?? false;
-    if (startHeld && !this.startWasHeld) {
-      this.paused = !this.paused;
-      this.showStats();
-      if (this.paused) this.tweens.pauseAll();
-      else this.tweens.resumeAll();
-    }
+    if (startHeld && !this.startWasHeld) this.togglePause();
     this.startWasHeld = startHeld;
-    let message = "Press a controller button";
-    if (!navigator.getGamepads) message = "Gamepad API unavailable";
-    if (pad) message = this.paused ? "Paused · Press Start to resume" : "Controller detected";
+    const message = this.paused ? "Paused" : pad ? "Controller detected" : "Hold to fire · Drag to steer";
     if (message !== this.status.textContent) this.status.textContent = message;
     if (this.paused) return;
 
@@ -276,14 +271,14 @@ class FlightScene extends Phaser.Scene {
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
     this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
-    if (!pad) return;
+    if (!pad && !this.pointer) return;
 
-    const held = (index: number) => Number(pad.buttons[index]?.pressed ?? false);
+    const held = (index: number) => Number(pad?.buttons[index]?.pressed ?? false);
     let x = held(15) - held(14);
     let y = held(13) - held(12);
     if (!x && !y) {
-      const stickX = pad.axes[0] ?? 0;
-      const stickY = pad.axes[1] ?? 0;
+      const stickX = pad?.axes[0] ?? 0;
+      const stickY = pad?.axes[1] ?? 0;
       if (Math.hypot(stickX, stickY) >= 0.30) {
         const eighthTurn = Math.PI / 4;
         const angle = Math.round(Math.atan2(stickY, stickX) / eighthTurn) * eighthTurn;
@@ -291,16 +286,20 @@ class FlightScene extends Phaser.Scene {
         y = Math.round(Math.sin(angle));
       }
     }
+    if (this.pointer) {
+      x = this.pointer.x;
+      y = this.pointer.y;
+    }
     const length = Math.hypot(x, y);
     if (length) {
-      const distance = flightSpeed * seconds;
+      const distance = flightSpeed * seconds * Math.min(1, length);
       this.ship.x = Phaser.Math.Clamp(this.ship.x + distance * x / length, 10, 350);
       this.ship.y = Phaser.Math.Clamp(this.ship.y + distance * y / length, 10, 470);
     }
 
     if (length) this.positionPods();
 
-    if (pad.buttons[0]?.pressed && this.fireCooldown <= 0) {
+    if ((this.pointer || pad?.buttons[0]?.pressed) && this.fireCooldown <= 0) {
       const previousShots = this.shots.length;
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.combatAudio.projectile("bolt");
@@ -343,8 +342,49 @@ class FlightScene extends Phaser.Scene {
     });
   }
 
+  private bindPointer() {
+    const canvas = this.game.canvas;
+    const pause = document.getElementById("pause")!;
+    const listeners = new AbortController();
+    const options = { signal: listeners.signal };
+    const release = (event: PointerEvent) => {
+      if (this.pointer?.id === event.pointerId) this.pointer = undefined;
+    };
+    canvas.addEventListener("pointerdown", event => {
+      if (this.paused || this.pointer || event.button !== 0) return;
+      canvas.setPointerCapture(event.pointerId);
+      this.pointer = { id: event.pointerId, originX: event.clientX, originY: event.clientY, x: 0, y: 0 };
+    }, options);
+    canvas.addEventListener("pointermove", event => {
+      const stick = this.pointer;
+      if (!stick || stick.id !== event.pointerId) return;
+      const radius = canvas.getBoundingClientRect().width / 10;
+      if (radius <= 0) return;
+      stick.x = (event.clientX - stick.originX) / radius;
+      stick.y = (event.clientY - stick.originY) / radius;
+    }, options);
+    for (const name of ["pointerup", "pointercancel", "lostpointercapture"] as const) {
+      canvas.addEventListener(name, release, options);
+    }
+    window.addEventListener("blur", () => { this.pointer = undefined; }, options);
+    pause.addEventListener("click", () => this.togglePause(), options);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      listeners.abort();
+      this.pointer = undefined;
+    });
+  }
+
+  private togglePause() {
+    this.paused = !this.paused;
+    this.pointer = undefined;
+    this.showStats();
+    if (this.paused) this.tweens.pauseAll();
+    else this.tweens.resumeAll();
+  }
+
   private showStats() {
     const panel = document.getElementById("stats")!;
+    document.getElementById("pause")!.textContent = this.paused ? "Resume" : "Pause";
     panel.hidden = !this.paused;
     if (!this.paused) return;
     const { fired, hits, kills, wardens, chips, hitsTaken } = this.stats;

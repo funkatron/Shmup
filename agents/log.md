@@ -213,3 +213,10 @@ A coral twin-tube frigate crosses each ten-second wave. Its pink missiles snapsh
 
 - [x] TypeScript, production build and simulated twin launch with a subsequent fighter sidestep.
 - [ ] Playtest the dodge during a carrier pass on iPad.
+
+## 2026-11-24 · One-finger flight · PR #1
+
+Edward had no controller available. Holding the canvas fires, and dragging from the touch origin steers with proportional speed up to the controller speed. Release stops both. A header button opens the existing pause and statistics view.
+
+- [x] TypeScript, production build and simulated controller-free firing, half-speed steering, cancellation and pause/resume.
+- [ ] Physical iPad Safari touch feel and audio unlock.
