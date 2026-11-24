@@ -1,8 +1,14 @@
-# Shmup
+# Surrender
 
 An original vertical arcade shooter built with Phaser, TypeScript, and Vite. The first playable encounter tests how it feels to sweep across the screen, dodge, and return to a firing lane on an iPad with an 8BitDo Lite 2.
 
 Pushes to `controller-flight` automatically rebuild the [public iPad preview](https://funkatron.github.io/Shmup/). Refresh after the Pages workflow succeeds and check the commit shown above the playfield.
+
+## Flight demo and scoring
+
+[Watch the flight demo](https://funkatron.github.io/Shmup/?mode=demo) to see steering, burst fire, homing missiles and drone formations in live combat. The highlighted face button follows each lesson on the SN30 Pro. **Play Surrender** starts a fresh scored flight. Every flight opens with a 2.6-second descent from a close side view to overhead.
+
+Each collected chip earns 50 points. Scout, raider, frigate and carrier kills earn 100, 200, 400 and 500 points respectively. Defeating the Warden earns 5,000. The score appears above the playfield and on the pause panel.
 
 ## Play the crossing encounter
 

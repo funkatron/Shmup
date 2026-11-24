@@ -1,3 +1,4 @@
+import { drawArrival } from "./arrival";
 import { City } from "./city";
 import Phaser from "phaser";
 
@@ -15,6 +16,7 @@ const wardenStages = [
 ] as const;
 const flightSpeed = 210; // Logical pixels per second.
 
+const lessons = ["Steer · left stick or drag", "Hold B · four cannon volleys", "Hold Y · homing missiles", "Tap X · cycle drone formations"];
 const maxWeaponLevel = 4;
 const formations = ["Ahead", "Free", "Defensive", "Roll", "Spread"] as const;
 const dropOrder = ["cannon", "missile", "double"] as const;
@@ -25,6 +27,12 @@ const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 
 
 class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
+  private score = 0;
+  private demo = new URLSearchParams(location.search).get("mode") === "demo";
+  private demoTime = 0;
+  private lesson = -1;
+  private introTime = 0;
+  private arrival?: Phaser.GameObjects.Graphics;
   private pods: Phaser.GameObjects.Image[] = [];
   private missileCooldown = 0;
   private missiles = new Map<Phaser.GameObjects.Image, {
@@ -142,6 +150,19 @@ class FlightScene extends Phaser.Scene {
 
     this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod"));
     this.positionPods();
+    this.score = 0;
+    this.addScore(0);
+    this.introTime = this.demoTime = 0;
+    this.lesson = -1;
+    this.ship.setVisible(false);
+    this.arrival = this.add.graphics().setDepth(10);
+    drawArrival(this.arrival, 0);
+    if (this.demo) {
+      const link = document.querySelector<HTMLAnchorElement>("#mode")!;
+      link.textContent = "Play Surrender";
+      link.href = location.pathname;
+      link.target = "_self";
+    }
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
     document.getElementById("build")!.textContent = [
       `v${version}  ·  ${commit}  ·  ${flightSpeed} px/s`,
@@ -173,6 +194,18 @@ class FlightScene extends Phaser.Scene {
       if (mark.y >= 544) mark.y -= 640;
     }
     this.bridge.y = this.marks[1].y;
+    if (this.arrival) {
+      this.introTime += seconds;
+      const fraction = Math.min(1, this.introTime / 2.6);
+      drawArrival(this.arrival, fraction);
+      if (fraction === 1) {
+        this.arrival.destroy();
+        this.arrival = undefined;
+        this.ship.setVisible(true);
+      }
+      return;
+    }
+    if (this.demo) this.updateDemo(seconds);
     const previousTime = this.carrierTime % 5;
     let passTime = previousTime;
     this.untilBoss -= seconds;
@@ -224,6 +257,7 @@ class FlightScene extends Phaser.Scene {
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
         this.stats.chips++;
+        this.addScore(50);
         this.combatAudio.cue("pickup");
         if (this.cannonLevel === maxWeaponLevel && this.missileLevel === maxWeaponLevel && this.drones.length === maxWeaponLevel) {
           this.reserves++;
@@ -294,7 +328,7 @@ class FlightScene extends Phaser.Scene {
       });
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
-    const cannonHeld = Boolean(this.pointer || pad?.buttons[0]?.pressed);
+    const cannonHeld = Boolean(this.demo && this.lesson === 1 || this.pointer || pad?.buttons[0]?.pressed);
     if (cannonHeld) {
       if (this.cannonVolley || this.fireCooldown > 0) this.fireCooldown -= seconds;
     } else {
@@ -307,7 +341,7 @@ class FlightScene extends Phaser.Scene {
       this.combatAudio.projectile("beam");
       this.beamCooldown = 0.32;
     }
-    if (!pad && !this.pointer) {
+    if (!this.demo && !pad && !this.pointer) {
       this.drawLocks();
       return;
     }
@@ -328,6 +362,10 @@ class FlightScene extends Phaser.Scene {
     if (this.pointer) {
       x = this.pointer.x;
       y = this.pointer.y;
+    }
+    if (this.demo) {
+      x = (180 + 105 * Math.sin(this.demoTime * 0.9) - this.ship.x) / 70;
+      y = (345 + 36 * Math.cos(this.demoTime) - this.ship.y) / 70;
     }
     const length = Math.hypot(x, y);
     if (length) {
@@ -352,13 +390,35 @@ class FlightScene extends Phaser.Scene {
       this.cannonVolley = (this.cannonVolley + 1) % 4;
       this.fireCooldown += step * (this.cannonVolley === 0 ? 3 : 1);
     }
-    if ((this.pointer || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
+    if ((this.demo && this.lesson === 2 || this.pointer || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
       this.launchMissiles(this.missileLevel);
       this.combatAudio.projectile("missiles");
       this.missileCooldown = 0.84;
     }
     this.stats.fired += this.shots.length - previousShots;
     this.drawLocks();
+  }
+
+  private addScore(points: number) {
+    this.score += points;
+    document.getElementById("score")!.textContent = (this.demo ? "DEMO " : "SCORE ") + String(this.score).padStart(6, "0");
+  }
+
+  private updateDemo(seconds: number) {
+    this.demoTime += seconds;
+    const next = Math.floor(this.demoTime / 5) % lessons.length;
+    if (next !== this.lesson) {
+      this.lesson = next;
+      const panel = document.getElementById("lesson")!;
+      panel.hidden = false;
+      panel.dataset.step = String(next);
+      panel.querySelector(".caption")!.textContent = lessons[next];
+      if (next === 2) this.missileLevel = 2;
+      if (next === 3) {
+        while (this.drones.length < 3) this.deployDrone();
+        this.cycleFormation();
+      }
+    }
   }
 
   private cycleFormation() {
@@ -394,6 +454,7 @@ class FlightScene extends Phaser.Scene {
     this.stats.hits++;
     const scout = this.scouts.find(s => s.sprite === actor);
     if (scout) {
+      this.addScore(100);
       scout.down = true;
       scout.sprite.setVisible(false);
       this.explode(scout.sprite.x, scout.sprite.y, "scout");
@@ -409,6 +470,7 @@ class FlightScene extends Phaser.Scene {
         this.boss.setTint(0xffdddd);
       }
       if (this.bossHp <= 0) {
+        this.addScore(5000);
         this.stats.wardens++;
         this.boss.setVisible(false);
         this.bossMeter.clear();
@@ -424,6 +486,7 @@ class FlightScene extends Phaser.Scene {
         this.untilBoss = 40;
       }
     } else if (actor === this.carrier) {
+      this.addScore(500);
       this.carrier.setVisible(false);
       this.explode(this.carrier.x, this.carrier.y, "carrier");
       this.chip.setTexture("chip-" + dropOrder[this.dropIndex]);
@@ -431,9 +494,11 @@ class FlightScene extends Phaser.Scene {
       this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
       this.chipDrift = this.chip.x < 180 ? 20 : -20;
     } else if (actor === this.frigate) {
+      this.addScore(400);
       this.frigate.setVisible(false);
       this.explode(this.frigate.x, this.frigate.y, "raider");
     } else if (actor === this.target) {
+      this.addScore(200);
       this.target.setVisible(false);
       this.explode(this.target.x, this.target.y, "raider");
     }
@@ -595,6 +660,7 @@ class FlightScene extends Phaser.Scene {
     const accuracy = fired ? Math.round(100 * hits / fired) + "%" : "—";
     panel.textContent = [
       "FLIGHT STATS", "",
+      `Score        ${this.score}`,
       `Accuracy     ${accuracy} (${hits}/${fired})`,
       `Destroyed    ${kills}`,
       `Wardens      ${wardens}`,

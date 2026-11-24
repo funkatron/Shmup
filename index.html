@@ -3,11 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Shmup flight test</title>
+  <title>Surrender</title>
   <style>
     body { margin: 0; height: 100dvh; display: grid; grid-template-rows: auto minmax(0, 1fr); background: black; color: #b9d6de; }
     header { padding: 6px 10px; font: 12px/1.35 monospace; }
     #formation, #sound, #pause { float: right; width: 8em; min-height: 32px; font: inherit; background: #102128; color: inherit; border: 1px solid #506970; }
+    .hud { display:flex; align-items:center; gap:1em; clear:both; padding-top:4px; }
+    .hud strong {color:#79fff3;letter-spacing:.14em} .hud a {color:#c4afff;margin-left:auto}
+    #lesson { position:absolute; z-index:2; bottom:1em; left:50%; transform:translateX(-50%); width:max-content; max-width:90%; background:#050b18ed; border:1px solid #658e9f; padding:.6em; font:14px monospace; pointer-events:none; }
+    #lesson .pad { position:relative;display:inline-block;width:3em;height:3em;vertical-align:middle;margin-right:.5em }
+    .pad i { position:absolute;width:1.4em;height:1.4em;border:1px solid #627583;border-radius:50%;text-align:center;line-height:1.4;font:normal 11px/1.4 monospace;color:#879ea8 }
+    .pad i:nth-child(1){top:0;left:30%}.pad i:nth-child(2){bottom:0;left:30%}.pad i:nth-child(3){top:30%;left:0}.pad i:nth-child(4){top:30%;right:0}
+    #lesson[data-step="1"] i:nth-child(2), #lesson[data-step="2"] i:nth-child(3), #lesson[data-step="3"] i:nth-child(1){background:#92fff0;color:#041216;border-color:#92fff0}
+    #lesson b {color:#9dfff0;font-size:1.3em} #lesson[data-step="0"] .pad,#lesson:not([data-step="0"]) b{display:none} #flight {position:relative}
     #build { white-space: pre-line; }
     #flight { min-height: 0; overflow: hidden; }
     #stats { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; padding: 1em 1.4em; background: #060d12; color: #acf5df; border: 1px solid #65a99d; font: 15px/1.6 monospace; pointer-events: none; }
@@ -16,8 +24,8 @@
   </style>
 </head>
 <body>
-  <header><button id="formation" type="button" aria-label="Cycle drone formation">Ahead</button><button id="sound" type="button" aria-pressed="false">Enable sound</button><button id="pause" type="button">Pause</button><div id="controller">Hold to fire · Drag to steer</div><div id="build"></div></header>
-  <main id="flight"></main>
+  <header><button id="formation" type="button" aria-label="Cycle drone formation">Ahead</button><button id="sound" type="button" aria-pressed="false">Enable sound</button><button id="pause" type="button">Pause</button><div id="controller">Hold to fire · Drag to steer</div><div id="build"></div><div class="hud"><strong>SURRENDER</strong><output id="score">000000</output><a id="mode" href="?mode=demo" target="_blank" rel="noopener">Watch demo ↗</a></div></header>
+  <main id="flight"><div id="lesson" hidden><b aria-hidden="true">✥</b><span class="pad" aria-hidden="true"><i>X</i><i>B</i><i>Y</i><i>A</i></span> <span class="caption"></span></div></main>
   <pre id="stats" aria-label="Flight statistics" hidden></pre>
   <script type="module" src="/src/main.ts"></script>
 </body>

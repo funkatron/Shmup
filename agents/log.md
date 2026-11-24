@@ -304,3 +304,10 @@ L4 adds a fourth straight bolt with the existing four-volley cadence. Drones fir
 
 - [x] TypeScript and production build. Simulated four straight lanes, firing without input, three-hit destruction, continuous contact, all three excess chip types, reserve deployment and flight reset.
 - [ ] Playtest the four-lane spacing and defensive formation on iPad.
+
+## 2026-11-24 · Surrender flight arrival, score and demo · PR #1
+
+Edward named the game Surrender. The opening projects a wireframe fighter through a changing camera yaw, elevation and scale before handing off to the flight sprite. Encounter time begins after arrival. A separate demo session steers and uses the real weapon logic while a face-button diagram highlights the current lesson. Player and demo scores are per flight. See the README for point values.
+
+- [x] TypeScript, production build and scene simulation. Verified intro handoff, frozen encounter time during arrival, all four lessons and wraparound, demo firing and formation change, fresh score, and all enemy awards.
+- [ ] Check the opening transition and demo readability on physical iPad.
