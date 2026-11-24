@@ -260,3 +260,10 @@ The sound button shows **Enable sound** while the audio context is suspended. Ta
 - [x] TypeScript and production build passed. Simulated the first volley and a real pickup through the flight update loop. Confirmed three bolts, six then eight missiles, and zero then one chip collected.
 - [x] Simulated suspended audio on startup, unlock by touch or sound button, cannon playback, saved mute, and listener cleanup.
 - [ ] Confirm audible first fire on iPad Safari and the Lite 2 after a fresh load. Local Chromium could not launch because its process socket was unavailable.
+
+## 2026-11-24 · Missile locks and impacts · PR #1
+
+Edward confirmed the previous preview worked well. Each tracked enemy now gets four colored vector corners. Missiles sharing that target use its color for their hull and trail. Segment versus hit-box collision handles sideways flight and removes a missile and its trail in the impact update.
+
+- [x] TypeScript and production build. Simulated two simultaneous target colors, shared missile tints, a horizontal hit, single damage registration, and removal of the projectile, trail and final lock.
+- [ ] Judge reticle readability on iPad during a six-missile volley.

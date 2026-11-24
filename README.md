@@ -67,3 +67,5 @@ See the [power-up design study](docs/power-ups.md) for the next carrier experime
 Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
 
 The **Warden** enters after 40 seconds and takes over the arena. Its 96 HP are shown on a twelve-segment hull meter. The left wing cracks at 72 HP, the right at 48, and the core splits at 24. Listen for a short crack, a stepped crunch and a low falling rumble at those three transitions. Short pink traces announce an aimed five-shot fan. At half hull the fan widens to seven. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the five-chip loadout](https://funkatron.github.io/Shmup/?encounter=boss).
+
+Four colored corner marks identify an enemy tracked by your missiles. Missiles and their trails take the color of their current target. Several missiles can share a lock. The marks disappear when the final lock ends.

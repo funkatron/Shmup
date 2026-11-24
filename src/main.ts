@@ -27,6 +27,9 @@ class FlightScene extends Phaser.Scene {
     age: number; target?: Phaser.GameObjects.Image; trail: Phaser.GameObjects.Graphics;
     points: { x: number; y: number; time: number }[];
   }>();
+  private lockOverlay!: Phaser.GameObjects.Graphics;
+  private lockColors = new Map<Phaser.GameObjects.Image, number>();
+  private nextHue = 0.44;
   private weaponLevel!: number;
   private status = document.getElementById("controller")!;
 
@@ -110,6 +113,8 @@ class FlightScene extends Phaser.Scene {
     });
     this.ship = beam(this, 180, 360, "fighter");
     this.missiles.clear();
+    this.lockColors.clear();
+    this.lockOverlay = this.add.graphics().setDepth(0.5);
     this.missileCooldown = 0;
     this.weaponLevel = 5;
     this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod"));
@@ -229,14 +234,23 @@ class FlightScene extends Phaser.Scene {
         missile.trail.clear();
         for (let j = 1; j < missile.points.length; j++) {
           const a = missile.points[j - 1], b = missile.points[j];
-          missile.trail.lineStyle(1, 0x80ffca, 0.65 * (1 - (missile.age - a.time) / missileTrailSeconds));
+          missile.trail.lineStyle(1, this.lockColor(missile.target), 0.65 * (1 - (missile.age - a.time) / missileTrailSeconds));
           missile.trail.lineBetween(a.x, a.y, b.x, b.y);
         }
       }
       const crosses = (actor: Phaser.GameObjects.Image, halfWidth: number) => {
-        if (!actor.visible || previousY + 5 < actor.y - 7 || shot.y - 5 > actor.y + 7) return false;
-        const fraction = previousY === shot.y ? 0 : Phaser.Math.Clamp((previousY - actor.y) / (previousY - shot.y), 0, 1);
-        return Math.abs(previousX + (shot.x - previousX) * fraction - actor.x) <= halfWidth;
+        if (!actor.visible) return false;
+        // Intersect the entire frame of travel with the hit box, including sideways flight.
+        let enter = 0, leave = 1;
+        const clip = (start: number, end: number, center: number, radius: number) => {
+          if (start === end) return Math.abs(start - center) <= radius;
+          const a = (center - radius - start) / (end - start);
+          const b = (center + radius - start) / (end - start);
+          enter = Math.max(enter, Math.min(a, b));
+          leave = Math.min(leave, Math.max(a, b));
+          return enter <= leave;
+        };
+        return clip(previousX, shot.x, actor.x, halfWidth) && clip(previousY, shot.y, actor.y, 12);
       };
       const hitBoss = crosses(this.boss, 43);
       const hitCarrier = crosses(this.carrier, 16);
@@ -305,7 +319,10 @@ class FlightScene extends Phaser.Scene {
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
     this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
-    if (!pad && !this.pointer) return;
+    if (!pad && !this.pointer) {
+      this.drawLocks();
+      return;
+    }
 
     const held = (index: number) => Number(pad?.buttons[index]?.pressed ?? false);
     let x = held(15) - held(14);
@@ -349,6 +366,7 @@ class FlightScene extends Phaser.Scene {
       this.stats.fired += this.shots.length - previousShots;
       this.fireCooldown = 0.12;
     }
+    this.drawLocks();
   }
 
   private fireFrigateMissiles() {
@@ -499,6 +517,41 @@ class FlightScene extends Phaser.Scene {
       }
     }
     return closest;
+  }
+
+  private lockColor(target?: Phaser.GameObjects.Image) {
+    if (!target?.visible) return 0xbaffda;
+    let color = this.lockColors.get(target);
+    if (color === undefined) {
+      color = Phaser.Display.Color.HSVToRGB(this.nextHue, 0.65, 1).color;
+      this.nextHue = (this.nextHue + 0.381966) % 1;
+      this.lockColors.set(target, color);
+    }
+    return color;
+  }
+
+  private drawLocks() {
+    this.lockOverlay.clear();
+    const active = new Set<Phaser.GameObjects.Image>();
+    for (const [shot, { target }] of this.missiles) {
+      shot.setTint(this.lockColor(target));
+      if (target?.visible) active.add(target);
+    }
+    for (const [target, color] of this.lockColors) {
+      if (!active.has(target)) {
+        this.lockColors.delete(target);
+        continue;
+      }
+      const radius = target === this.boss ? 46 : target === this.carrier || target === this.frigate ? 20 : 14;
+      this.lockOverlay.lineStyle(1, color, 0.9);
+      for (const side of [-1, 1]) {
+        for (const end of [-1, 1]) {
+          const x = target.x + side * radius, y = target.y + end * (target === this.boss ? 24 : 11);
+          this.lockOverlay.lineBetween(x, y, x - side * 4, y);
+          this.lockOverlay.lineBetween(x, y, x, y - end * 4);
+        }
+      }
+    }
   }
 
   private positionPods() {
