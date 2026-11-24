@@ -311,3 +311,10 @@ Edward named the game Surrender. The opening projects a wireframe fighter throug
 
 - [x] TypeScript, production build and scene simulation. Verified intro handoff, frozen encounter time during arrival, all four lessons and wraparound, demo firing and formation change, fresh score, and all enemy awards.
 - [ ] Check the opening transition and demo readability on physical iPad.
+
+## 2026-11-24 · Demonstrate a power-up pickup · PR #1
+
+The demo opens with a marked carrier pass. Cannon fire destroys it, the guide ring shifts to its chip, and the autopilot flies through it. Collection advances the actual cannon level and the fighter shows the paired volley for two seconds before the control lessons.
+
+- [x] Simulated the encounter at 10, 16.67, 33.33 and 50 ms per update. Verified all three captions, one chip pickup, cannon L2, a second firing lane and handoff to steering. TypeScript and production build passed.
+- [ ] Check guide-ring readability on physical iPad.

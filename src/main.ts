@@ -30,6 +30,8 @@ class FlightScene extends Phaser.Scene {
   private score = 0;
   private demo = new URLSearchParams(location.search).get("mode") === "demo";
   private demoTime = 0;
+  private pickupGuide?: Phaser.GameObjects.Graphics;
+  private pickupCollectedAt?: number;
   private lesson = -1;
   private introTime = 0;
   private arrival?: Phaser.GameObjects.Graphics;
@@ -158,6 +160,8 @@ class FlightScene extends Phaser.Scene {
     this.arrival = this.add.graphics().setDepth(10);
     drawArrival(this.arrival, 0);
     if (this.demo) {
+      this.pickupGuide = this.add.graphics().setDepth(2);
+      this.pickupCollectedAt = undefined;
       const link = document.querySelector<HTMLAnchorElement>("#mode")!;
       link.textContent = "Play Surrender";
       link.href = location.pathname;
@@ -256,6 +260,7 @@ class FlightScene extends Phaser.Scene {
       this.chip.x += this.chipDrift * seconds;
       this.chip.y += 68 * seconds;
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
+        if (this.pickupGuide) this.pickupCollectedAt = this.demoTime;
         this.stats.chips++;
         this.addScore(50);
         this.combatAudio.cue("pickup");
@@ -328,7 +333,7 @@ class FlightScene extends Phaser.Scene {
       });
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
-    const cannonHeld = Boolean(this.demo && this.lesson === 1 || this.pointer || pad?.buttons[0]?.pressed);
+    const cannonHeld = Boolean(this.demo && (this.lesson === 1 || (!!this.pickupGuide && !this.chip.visible)) || this.pointer || pad?.buttons[0]?.pressed);
     if (cannonHeld) {
       if (this.cannonVolley || this.fireCooldown > 0) this.fireCooldown -= seconds;
     } else {
@@ -366,6 +371,11 @@ class FlightScene extends Phaser.Scene {
     if (this.demo) {
       x = (180 + 105 * Math.sin(this.demoTime * 0.9) - this.ship.x) / 70;
       y = (345 + 36 * Math.cos(this.demoTime) - this.ship.y) / 70;
+      if (this.pickupGuide) {
+        const chasing = this.chip.visible;
+        x = ((chasing ? this.chip.x : 180) - this.ship.x) / 24;
+        y = ((chasing ? this.chip.y : 350) - this.ship.y) / 24;
+      }
     }
     const length = Math.hypot(x, y);
     if (length) {
@@ -406,6 +416,28 @@ class FlightScene extends Phaser.Scene {
 
   private updateDemo(seconds: number) {
     this.demoTime += seconds;
+    if (this.pickupGuide) {
+      const panel = document.getElementById("lesson")!;
+      const collected = this.pickupCollectedAt !== undefined;
+      const chasing = this.chip.visible;
+      const focus = chasing ? this.chip : this.carrier;
+      this.pickupGuide.clear();
+      if (!collected && focus.visible) {
+        const r = (chasing ? 13 : 23) + 2 * Math.sin(this.demoTime * 6);
+        this.pickupGuide.lineStyle(1, 0xa8ff80, 0.85);
+        this.pickupGuide.strokeCircle(focus.x, focus.y, r);
+      }
+      const caption = collected ? "Cannon upgraded · two parallel shots" :
+        chasing ? "Fly through the pulsing chip" : "Shoot the green carrier";
+      panel.hidden = false;
+      panel.dataset.step = collected || !chasing ? "1" : "0";
+      const label = panel.querySelector(".caption")!;
+      if (label.textContent !== caption) label.textContent = caption;
+      if (!collected || this.demoTime - this.pickupCollectedAt! < 2) return;
+      this.pickupGuide.destroy();
+      this.pickupGuide = undefined;
+      this.demoTime = 0;
+    }
     const next = Math.floor(this.demoTime / 5) % lessons.length;
     if (next !== this.lesson) {
       this.lesson = next;
