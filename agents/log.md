@@ -267,3 +267,12 @@ Edward confirmed the previous preview worked well. Each tracked enemy now gets f
 
 - [x] TypeScript and production build. Simulated two simultaneous target colors, shared missile tints, a horizontal hit, single damage registration, and removal of the projectile, trail and final lock.
 - [ ] Judge reticle readability on iPad during a six-missile volley.
+
+## 2026-11-24 · Three weapon buttons · PR #1
+
+Fresh flights have one cannon bolt. Carrier drops rotate by destruction through green cannon, cyan missile and violet double. Independent inputs and cooldowns allow simultaneous fire. The Lite 2 mapping uses face-button positions in Mega Drive A/B/C order (left/bottom/right). Touch fires all equipped weapons.
+
+The Gunhed / Blazing Lazers manual lists Homing Missile, Shield, Multi-Body and Full Fire. The C weapon adapts Multi-Body into a trailing ship with a dedicated trigger. [Official manual, Power Up Items](https://dds.konami.com/games/manual/pcemini/en_Blazing.pdf)
+
+- [x] Production build and TypeScript. Simulated fresh loadout, independent pickups, individual and combined buttons, repeat upgrades, and one-finger firing.
+- [ ] Confirm physical button positions in iPad Safari and judge the trailing ship during turns.

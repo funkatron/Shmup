@@ -15,6 +15,8 @@ const wardenStages = [
 ] as const;
 const flightSpeed = 210; // Logical pixels per second.
 
+const dropOrder = ["cannon", "missile", "double"] as const;
+
 const missileTrailSeconds = 0.50;
 
 const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 0, hitsTaken: 0 });
@@ -30,7 +32,12 @@ class FlightScene extends Phaser.Scene {
   private lockOverlay!: Phaser.GameObjects.Graphics;
   private lockColors = new Map<Phaser.GameObjects.Image, number>();
   private nextHue = 0.44;
-  private weaponLevel!: number;
+  private cannonLevel = 0;
+  private missileLevel = 0;
+  private doubleLevel = 0;
+  private double!: Phaser.GameObjects.Image;
+  private doubleCooldown = 0;
+  private dropIndex = 0;
   private status = document.getElementById("controller")!;
 
   private marks: Phaser.GameObjects.Image[] = [];
@@ -105,7 +112,7 @@ class FlightScene extends Phaser.Scene {
     this.untilBoss = new URLSearchParams(location.search).get("encounter") === "boss" ? 0 : 40;
     this.carrierTime = 0;
     this.carrier = beam(this, 370, 180, "carrier");
-    this.chip = beam(this, 0, 0, "chip").setVisible(false);
+    this.chip = beam(this, 0, 0, "chip-cannon").setVisible(false);
     this.chip.setAlpha(0.76);
     this.tweens.add({
       targets: this.chip, scale: this.chip.scaleX * 1.25, alpha: 1,
@@ -116,7 +123,10 @@ class FlightScene extends Phaser.Scene {
     this.lockColors.clear();
     this.lockOverlay = this.add.graphics().setDepth(0.5);
     this.missileCooldown = 0;
-    this.weaponLevel = 5;
+    this.cannonLevel = this.missileLevel = this.doubleLevel = 0;
+    this.dropIndex = 0;
+    this.doubleCooldown = this.fireCooldown = 0;
+    this.double = beam(this, this.ship.x, this.ship.y + 18, "double").setVisible(false);
     this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod"));
     this.positionPods();
     const { version, commit, builtAt } = __FLIGHT_BUILD__;
@@ -199,7 +209,14 @@ class FlightScene extends Phaser.Scene {
       if (Math.hypot(this.chip.x - this.ship.x, this.chip.y - this.ship.y) <= 13) {
         this.stats.chips++;
         this.combatAudio.cue("pickup");
-        this.weaponLevel++;
+        switch (this.chip.texture.key) {
+          case "chip-cannon": this.cannonLevel++; break;
+          case "chip-missile": this.missileLevel++; break;
+          case "chip-double":
+            if (!this.doubleLevel) this.double.setPosition(this.ship.x, this.ship.y + 18).setVisible(true);
+            this.doubleLevel++;
+            break;
+        }
         this.positionPods();
         this.burst(this.chip.x, this.chip.y);
         this.chip.setVisible(false);
@@ -292,6 +309,8 @@ class FlightScene extends Phaser.Scene {
       } else if (hitCarrier) {
         this.carrier.setVisible(false);
         this.explode(this.carrier.x, this.carrier.y, "carrier");
+        this.chip.setTexture("chip-" + dropOrder[this.dropIndex]);
+        this.dropIndex = (this.dropIndex + 1) % dropOrder.length;
         this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
         this.chipDrift = this.chip.x < 180 ? 20 : -20;
       } else if (hitFrigate) {
@@ -319,6 +338,12 @@ class FlightScene extends Phaser.Scene {
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
     this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
+    this.doubleCooldown = Math.max(0, this.doubleCooldown - seconds);
+    if (this.double.visible) {
+      const follow = 1 - Math.exp(-6 * seconds);
+      this.double.x += (this.ship.x - this.double.x) * follow;
+      this.double.y += (Math.min(474, this.ship.y + 18) - this.double.y) * follow;
+    }
     if (!pad && !this.pointer) {
       this.drawLocks();
       return;
@@ -350,22 +375,27 @@ class FlightScene extends Phaser.Scene {
 
     if (length) this.positionPods();
 
+    const previousShots = this.shots.length;
     if ((this.pointer || pad?.buttons[0]?.pressed) && this.fireCooldown <= 0) {
-      const previousShots = this.shots.length;
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
       for (const pod of this.pods) {
         if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setRotation(pod.rotation).setDepth(-1));
       }
-      if (this.weaponLevel >= 3 && this.missileCooldown <= 0) {
-        this.launchMissiles(this.weaponLevel - 2);
-        this.combatAudio.projectile("missiles");
-        this.missileCooldown = 0.84;
-      }
-      this.stats.fired += this.shots.length - previousShots;
-      this.fireCooldown = 0.12;
+      this.fireCooldown = Math.max(0.07, 0.12 - Math.max(0, this.cannonLevel - 2) * 0.01);
     }
+    if ((this.pointer || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
+      this.launchMissiles(this.missileLevel);
+      this.combatAudio.projectile("missiles");
+      this.missileCooldown = 0.84;
+    }
+    if ((this.pointer || pad?.buttons[1]?.pressed) && this.doubleLevel && this.doubleCooldown <= 0) {
+      this.shots.push(beam(this, this.double.x, this.double.y - 8, "double-bolt"));
+      this.combatAudio.projectile("bolt");
+      this.doubleCooldown = Math.max(0.12, 0.32 - 0.04 * (this.doubleLevel - 1));
+    }
+    this.stats.fired += this.shots.length - previousShots;
     this.drawLocks();
   }
 
@@ -450,6 +480,7 @@ class FlightScene extends Phaser.Scene {
       `Destroyed    ${kills}`,
       `Wardens      ${wardens}`,
       `Chips        ${chips}`,
+      `Cannon +${this.cannonLevel}  Missiles ${this.missileLevel}  Double ${this.doubleLevel}`,
       `Hits taken   ${hitsTaken}`,
     ].join("\n");
   }
@@ -557,9 +588,9 @@ class FlightScene extends Phaser.Scene {
   private positionPods() {
     this.pods.forEach((pod, index) => {
       const side = index === 0 ? 1 : -1;
-      pod.setVisible(this.weaponLevel > index);
+      pod.setVisible(this.cannonLevel > index);
       pod.setPosition(Phaser.Math.Clamp(this.ship.x + side * 15, 4, 356), this.ship.y + 3);
-      pod.setRotation(this.weaponLevel >= 2 ? side * Math.PI / 15 : 0);
+      pod.setRotation(this.cannonLevel >= 2 ? side * Math.PI / 15 : 0);
     });
   }
 

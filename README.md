@@ -11,10 +11,12 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Touch and hold the playfield | Fires continuously. Drag away from the initial touch to steer. A shorter drag moves more slowly. Lift to stop, then touch anywhere to recenter. Tap Pause for flight stats. |
 | D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |
-| Bottom face button | Hold for continuous forward fire. Each yellow bolt stays in its firing lane. |
+| B · bottom face button | Fire the cannon. Start with one bolt. The first green chip adds a parallel bolt, the second opens the three-way spread, and later chips increase fire rate up to its cap. |
+| A · left face button | Fire homing missiles. Each cyan arrow chip adds a pair per volley. |
+| C · right face button | Fire from the trailing violet double. The first twin-diamond chip equips it. Further violet chips increase its fire rate up to its cap. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |
 | Orange scouts | Four formations cross each carrier pass. Each leader can fire a three-shot fan. Destroy the leader early to cancel its volley. Two higher formations arrive alongside the frigate in the second half. |
-| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Every flight starts with five chips’ worth of equipment: three-way spread and six homing missiles. Shoot the carrier and collect the pulsing green chip for another pair. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. The spread stays active. |
+| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Each new flight starts with the base cannon. Destroyed carriers cycle through cannon, missile, and double chips. Touch-and-hold fires all equipped weapons. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. The spread stays active. |
 | Coral twin-tube frigate | Crosses above the raider and launches two pink missiles aimed at your position. Sidestep after launch to dodge. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
@@ -66,6 +68,6 @@ See the [power-up design study](docs/power-ups.md) for the next carrier experime
 
 Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
 
-The **Warden** enters after 40 seconds and takes over the arena. Its 96 HP are shown on a twelve-segment hull meter. The left wing cracks at 72 HP, the right at 48, and the core splits at 24. Listen for a short crack, a stepped crunch and a low falling rumble at those three transitions. Short pink traces announce an aimed five-shot fan. At half hull the fan widens to seven. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the five-chip loadout](https://funkatron.github.io/Shmup/?encounter=boss).
+The **Warden** enters after 40 seconds and takes over the arena. Its 96 HP are shown on a twelve-segment hull meter. The left wing cracks at 72 HP, the right at 48, and the core splits at 24. Listen for a short crack, a stepped crunch and a low falling rumble at those three transitions. Short pink traces announce an aimed five-shot fan. At half hull the fan widens to seven. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the base cannon](https://funkatron.github.io/Shmup/?encounter=boss).
 
 Four colored corner marks identify an enemy tracked by your missiles. Missiles and their trails take the color of their current target. Several missiles can share a lock. The marks disappear when the final lock ends.

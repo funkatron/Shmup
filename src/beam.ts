@@ -73,10 +73,14 @@ export function prepareTraces(scene: Phaser.Scene) {
     [3,12,9,5,30,5,37,12,30,19,9,19,3,12],
     [10,8,10,16], [30,8,30,16], [16,8,24,8,24,16,16,16,16,8],
   ]);
-  traceTexture(scene, "chip", 20, 20, "#92ff60", 1, [
+  traceTexture(scene, "chip-cannon", 20, 20, "#92ff60", 1, [
     [5,4,15,4,15,16,5,16,5,4], [2,7,5,7], [15,7,18,7],
     [2,13,5,13], [15,13,18,13],
   ]);
+  traceTexture(scene, "chip-missile", 20, 20, "#62dfff", 1, [[10,2,17,16,10,12,3,16,10,2]]);
+  traceTexture(scene, "chip-double", 20, 20, "#c499ff", 1, [[3,10,8,4,13,10,8,16,3,10],[10,10,14,5,18,10,14,15,10,10]]);
+  traceTexture(scene, "double", 18, 18, "#c499ff", 0.85, [[9,2,15,14,9,11,3,14,9,2]]);
+  traceTexture(scene, "double-bolt", 12, 20, "#c499ff", 1, [[6,3,8,10,6,16,4,10,6,3]]);
   traceTexture(scene, "wing-pod", 10, 16, "#62fff4", 0.9, [
     [5,2,8,7,7,13,3,13,2,7,5,2],
   ]);
