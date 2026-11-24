@@ -14,6 +14,7 @@ Each collected chip earns 50 points. Scout, raider, frigate and carrier kills ea
 
 | Control or cue | What it does |
 |---|---|
+| On-screen controls | Slide on the left pad to steer in eight directions. Hold B for the cannon, Y for equipped missiles, or both. Tap X to cycle drone formations. |
 | Touch and hold the playfield | Fires continuously. Drag away from the initial touch to steer. A shorter drag moves more slowly. Lift to stop, then touch anywhere to recenter. Tap Pause for flight stats. |
 | D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |

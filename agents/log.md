@@ -325,3 +325,10 @@ The fighter renders at 130% scale with the same gameplay hit radius. Drone trave
 
 - [x] TypeScript, production build, pickup-demo regression and simulated drone motion, stable distinct locks, ring count, defensive projectile selection and removal.
 - [ ] Judge violet ring visibility alongside missile brackets on iPad.
+
+## 2026-11-24 · On-screen flight controls · PR #1
+
+Added a dedicated bottom row for an eight-way directional pad and separate B, Y and X controls. Captured touch pointers let the pilot steer and hold either or both weapons independently. The existing one-finger playfield gesture remains available.
+
+- [x] TypeScript and production build. Simulated simultaneous steering, cannon and missiles, a direction change, independent cancellation, loss of pointer capture and formation selection. Drone locks and the pickup demo also passed their simulation checks.
+- [ ] Check two-thumb reach on physical iPad.

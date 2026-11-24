@@ -27,6 +27,9 @@ const newFlightStats = () => ({ fired: 0, hits: 0, kills: 0, wardens: 0, chips: 
 
 class FlightScene extends Phaser.Scene {
   private ship!: Phaser.GameObjects.Image;
+  private touchX = 0;
+  private touchY = 0;
+  private touchButtons = new Map<number, HTMLElement>();
   private score = 0;
   private demo = new URLSearchParams(location.search).get("mode") === "demo";
   private demoTime = 0;
@@ -336,7 +339,7 @@ class FlightScene extends Phaser.Scene {
       });
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
-    const cannonHeld = Boolean(this.demo && (this.lesson === 1 || (!!this.pickupGuide && !this.chip.visible)) || this.pointer || pad?.buttons[0]?.pressed);
+    const cannonHeld = Boolean(this.demo && (this.lesson === 1 || (!!this.pickupGuide && !this.chip.visible)) || this.pointer || this.touchFiring("cannon-trigger") || pad?.buttons[0]?.pressed);
     if (cannonHeld) {
       if (this.cannonVolley || this.fireCooldown > 0) this.fireCooldown -= seconds;
     } else {
@@ -355,7 +358,7 @@ class FlightScene extends Phaser.Scene {
         this.beamCooldown = 0.32;
       }
     }
-    if (!this.demo && !pad && !this.pointer) {
+    if (!this.demo && !pad && !this.pointer && !this.touchButtons.size) {
       this.drawLocks();
       return;
     }
@@ -373,6 +376,7 @@ class FlightScene extends Phaser.Scene {
         y = Math.round(Math.sin(angle));
       }
     }
+    if (this.touchX || this.touchY) { x = this.touchX; y = this.touchY; }
     if (this.pointer) {
       x = this.pointer.x;
       y = this.pointer.y;
@@ -409,7 +413,7 @@ class FlightScene extends Phaser.Scene {
       this.cannonVolley = (this.cannonVolley + 1) % 4;
       this.fireCooldown += step * (this.cannonVolley === 0 ? 3 : 1);
     }
-    if ((this.demo && this.lesson === 2 || this.pointer || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
+    if ((this.demo && this.lesson === 2 || this.pointer || this.touchFiring("missile-trigger") || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
       this.launchMissiles(this.missileLevel);
       this.combatAudio.projectile("missiles");
       this.missileCooldown = 0.84;
@@ -464,7 +468,7 @@ class FlightScene extends Phaser.Scene {
 
   private cycleFormation() {
     this.formation = (this.formation + 1) % formations.length;
-    document.getElementById("formation")!.textContent = formations[this.formation];
+    document.getElementById("formation-name")!.textContent = formations[this.formation];
   }
 
   private halfWidth(actor: Phaser.GameObjects.Image) {
@@ -679,13 +683,55 @@ class FlightScene extends Phaser.Scene {
     });
   }
 
+  private touchFiring(id: string) {
+    for (const button of this.touchButtons.values()) if (button.id === id) return true;
+    return false;
+  }
+
+  private clearTouchControls() {
+    for (const button of this.touchButtons.values()) button.classList.remove("active");
+    this.touchButtons.clear();
+    this.touchX = this.touchY = 0;
+  }
+
   private bindPointer() {
     const canvas = this.game.canvas;
     const pause = document.getElementById("pause")!;
     const listeners = new AbortController();
     const options = { signal: listeners.signal };
+    for (const id of ["steer", "cannon-trigger", "missile-trigger"]) {
+      const button = document.getElementById(id)!;
+      const steer = (event: PointerEvent) => {
+        if (id !== "steer" || !this.touchButtons.has(event.pointerId)) return;
+        const rect = button.getBoundingClientRect();
+        const dx = event.clientX - rect.left - rect.width / 2;
+        const dy = event.clientY - rect.top - rect.height / 2;
+        const angle = Math.round(Math.atan2(dy, dx) / (Math.PI / 4)) * Math.PI / 4;
+        const moving = Math.hypot(dx, dy) > rect.width * 0.12;
+        this.touchX = moving ? Math.round(Math.cos(angle)) : 0;
+        this.touchY = moving ? Math.round(Math.sin(angle)) : 0;
+      };
+      button.addEventListener("pointerdown", event => {
+        if (this.paused || this.demo || event.button !== 0 || this.touchFiring(id)) return;
+        button.setPointerCapture(event.pointerId);
+        this.touchButtons.set(event.pointerId, button);
+        button.classList.add("active");
+        steer(event);
+      }, options);
+      button.addEventListener("pointermove", steer, options);
+      const releaseButton = (event: PointerEvent) => {
+        if (!this.touchButtons.delete(event.pointerId)) return;
+        button.classList.remove("active");
+        if (id === "steer") this.touchX = this.touchY = 0;
+      };
+      for (const event of ["pointerup", "pointercancel", "lostpointercapture"] as const)
+        button.addEventListener(event, releaseButton, options);
+    }
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) this.clearTouchControls();
+    }, options);
     const selector = document.getElementById("formation")!;
-    selector.textContent = formations[0];
+    document.getElementById("formation-name")!.textContent = formations[0];
     selector.addEventListener("click", () => { if (!this.paused) this.cycleFormation(); }, options);
     const release = (event: PointerEvent) => {
       if (this.pointer?.id === event.pointerId) this.pointer = undefined;
@@ -706,15 +752,17 @@ class FlightScene extends Phaser.Scene {
     for (const name of ["pointerup", "pointercancel", "lostpointercapture"] as const) {
       canvas.addEventListener(name, release, options);
     }
-    window.addEventListener("blur", () => { this.pointer = undefined; }, options);
+    window.addEventListener("blur", () => { this.pointer = undefined; this.clearTouchControls(); }, options);
     pause.addEventListener("click", () => this.togglePause(), options);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       listeners.abort();
+      this.clearTouchControls();
       this.pointer = undefined;
     });
   }
 
   private togglePause() {
+    this.clearTouchControls();
     this.paused = !this.paused;
     this.pointer = undefined;
     this.showStats();
