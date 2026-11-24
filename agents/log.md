@@ -283,3 +283,10 @@ The cannon starts at L1 and gains a second parallel lane, a third parallel lane,
 
 - [x] TypeScript, production build and simulated independent buttons, all four tiers, excess pickups and fresh-flight reset.
 - [ ] Playtest the L4 double cadence and controller mapping on iPad.
+
+## 2026-11-24 · Burst cadence · PR #1
+
+Holding B or the playfield fires four straight cannon volleys and skips the next two firing steps. Levels 1–3 use 120 ms steps and L4 uses 90 ms. Releasing the trigger resets the burst. Missiles and the double keep independent clocks.
+
+- [x] TypeScript and production build. Simulated volleys at steps 0–3, 6–9 and 12 at all four levels, plus a fresh touch trigger after release.
+- [ ] Judge burst rhythm on physical iPad.

@@ -11,7 +11,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Touch and hold the playfield | Fires continuously. Drag away from the initial touch to steer. A shorter drag moves more slowly. Lift to stop, then touch anywhere to recenter. Tap Pause for flight stats. |
 | D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |
-| B · bottom face button | Fire the cannon. Start with one bolt. The first green chip adds a parallel bolt, the second adds a third parallel lane, and the third increases the firing rate. |
+| B · bottom face button | Hold for four volleys followed by two silent steps. Release and press to start a fresh burst. Start with one bolt. The first green chip adds a parallel bolt, the second adds a third parallel lane, and the third increases the firing rate. |
 | A · left face button | Fire homing missiles. Each cyan arrow chip adds a pair per volley, up to eight missiles. |
 | C · right face button | Fire from the trailing violet double. The first twin-diamond chip equips it. Levels 1–4 fire every 320, 260, 200 and 140 milliseconds respectively. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |

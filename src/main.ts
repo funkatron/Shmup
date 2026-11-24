@@ -72,6 +72,7 @@ class FlightScene extends Phaser.Scene {
   private combatAudio = new CombatAudio();
   private enemyShots: { sprite: Phaser.GameObjects.Image; vx: number; vy: number }[] = [];
   private fireCooldown = 0;
+  private cannonVolley = 0;
 
   create() {
     this.bindPointer();
@@ -127,7 +128,7 @@ class FlightScene extends Phaser.Scene {
     this.cannonLevel = 1;
     this.missileLevel = this.doubleLevel = 0;
     this.dropIndex = 0;
-    this.doubleCooldown = this.fireCooldown = 0;
+    this.doubleCooldown = this.fireCooldown = this.cannonVolley = 0;
     this.double = beam(this, this.ship.x, this.ship.y + 18, "double").setVisible(false);
     this.pods = [1, -1].map(() => beam(this, 0, 0, "wing-pod"));
     this.positionPods();
@@ -339,7 +340,12 @@ class FlightScene extends Phaser.Scene {
       });
     }
     this.missileCooldown = Math.max(0, this.missileCooldown - seconds);
-    this.fireCooldown = Math.max(0, this.fireCooldown - seconds);
+    const cannonHeld = Boolean(this.pointer || pad?.buttons[0]?.pressed);
+    if (cannonHeld) {
+      if (this.cannonVolley || this.fireCooldown > 0) this.fireCooldown -= seconds;
+    } else {
+      this.fireCooldown = this.cannonVolley = 0;
+    }
     this.doubleCooldown = Math.max(0, this.doubleCooldown - seconds);
     if (this.double.visible) {
       const follow = 1 - Math.exp(-6 * seconds);
@@ -378,14 +384,16 @@ class FlightScene extends Phaser.Scene {
     if (length) this.positionPods();
 
     const previousShots = this.shots.length;
-    if ((this.pointer || pad?.buttons[0]?.pressed) && this.fireCooldown <= 0) {
+    if (cannonHeld && this.fireCooldown <= 0.000001) {
       const shot = beam(this, this.ship.x, this.ship.y - 15, "bolt");
       this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
       for (const pod of this.pods) {
         if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setDepth(-1));
       }
-      this.fireCooldown = this.cannonLevel === maxWeaponLevel ? 0.09 : 0.12;
+      const step = this.cannonLevel === maxWeaponLevel ? 0.09 : 0.12;
+      this.cannonVolley = (this.cannonVolley + 1) % 4;
+      this.fireCooldown += step * (this.cannonVolley === 0 ? 3 : 1);
     }
     if ((this.pointer || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
       this.launchMissiles(this.missileLevel);
