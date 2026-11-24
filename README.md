@@ -11,12 +11,12 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 | Touch and hold the playfield | Fires continuously. Drag away from the initial touch to steer. A shorter drag moves more slowly. Lift to stop, then touch anywhere to recenter. Tap Pause for flight stats. |
 | D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |
-| B · bottom face button | Fire the cannon. Start with one bolt. The first green chip adds a parallel bolt, the second opens the three-way spread, and later chips increase fire rate up to its cap. |
-| A · left face button | Fire homing missiles. Each cyan arrow chip adds a pair per volley. |
-| C · right face button | Fire from the trailing violet double. The first twin-diamond chip equips it. Further violet chips increase its fire rate up to its cap. |
+| B · bottom face button | Fire the cannon. Start with one bolt. The first green chip adds a parallel bolt, the second adds a third parallel lane, and the third increases the firing rate. |
+| A · left face button | Fire homing missiles. Each cyan arrow chip adds a pair per volley, up to eight missiles. |
+| C · right face button | Fire from the trailing violet double. The first twin-diamond chip equips it. Levels 1–4 fire every 320, 260, 200 and 140 milliseconds respectively. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |
 | Orange scouts | Four formations cross each carrier pass. Each leader can fire a three-shot fan. Destroy the leader early to cancel its volley. Two higher formations arrive alongside the frigate in the second half. |
-| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Each new flight starts with the base cannon. Destroyed carriers cycle through cannon, missile, and double chips. Touch-and-hold fires all equipped weapons. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. The spread stays active. |
+| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Each new flight starts with the base cannon. Destroyed carriers cycle through cannon, missile, and double chips. Touch-and-hold fires all equipped weapons. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. |
 | Coral twin-tube frigate | Crosses above the raider and launches two pink missiles aimed at your position. Sidestep after launch to dodge. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
@@ -24,7 +24,7 @@ Every other carrier pass mirrors the raider and both scout flights too. Sound st
 
 To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship flashes and makes a short, crunchy low strike. Play continues. A rising four-note chime marks chip collection, held fire gives a rapid cannon report, each missile volley launches with a rising exhaust roar, and the Warden winds up audibly as its aim traces appear.
 
-The pause panel counts individual bolts and missiles that hit out of all projectiles fired. Destroyed includes Wardens. Chips and incoming projectile hits count each contact. A new page load starts a fresh flight.
+Each weapon caps at level 4. Extra chips still count as pickups. The pause panel shows all three levels and counts individual bolts and missiles that hit out of all projectiles fired. Destroyed includes Wardens. Chips and incoming projectile hits count each contact. A new page load starts a fresh flight.
 
 ### Compare the parallax
 

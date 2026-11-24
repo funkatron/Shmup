@@ -276,3 +276,10 @@ The Gunhed / Blazing Lazers manual lists Homing Missile, Shield, Multi-Body and 
 
 - [x] Production build and TypeScript. Simulated fresh loadout, independent pickups, individual and combined buttons, repeat upgrades, and one-finger firing.
 - [ ] Confirm physical button positions in iPad Safari and judge the trailing ship during turns.
+
+## 2026-11-24 · Four levels per weapon · PR #1
+
+The cannon starts at L1 and gains a second parallel lane, a third parallel lane, then faster fire. Missiles and the double start unequipped. Missile levels launch two to eight rounds. Double levels shorten the firing interval from 320 to 140 ms. All three cap at L4 and the pause panel shows current levels. Excess pickups count in flight statistics.
+
+- [x] TypeScript, production build and simulated independent buttons, all four tiers, excess pickups and fresh-flight reset.
+- [ ] Playtest the L4 double cadence and controller mapping on iPad.

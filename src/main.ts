@@ -15,6 +15,7 @@ const wardenStages = [
 ] as const;
 const flightSpeed = 210; // Logical pixels per second.
 
+const maxWeaponLevel = 4;
 const dropOrder = ["cannon", "missile", "double"] as const;
 
 const missileTrailSeconds = 0.50;
@@ -32,7 +33,7 @@ class FlightScene extends Phaser.Scene {
   private lockOverlay!: Phaser.GameObjects.Graphics;
   private lockColors = new Map<Phaser.GameObjects.Image, number>();
   private nextHue = 0.44;
-  private cannonLevel = 0;
+  private cannonLevel = 1;
   private missileLevel = 0;
   private doubleLevel = 0;
   private double!: Phaser.GameObjects.Image;
@@ -123,7 +124,8 @@ class FlightScene extends Phaser.Scene {
     this.lockColors.clear();
     this.lockOverlay = this.add.graphics().setDepth(0.5);
     this.missileCooldown = 0;
-    this.cannonLevel = this.missileLevel = this.doubleLevel = 0;
+    this.cannonLevel = 1;
+    this.missileLevel = this.doubleLevel = 0;
     this.dropIndex = 0;
     this.doubleCooldown = this.fireCooldown = 0;
     this.double = beam(this, this.ship.x, this.ship.y + 18, "double").setVisible(false);
@@ -210,11 +212,11 @@ class FlightScene extends Phaser.Scene {
         this.stats.chips++;
         this.combatAudio.cue("pickup");
         switch (this.chip.texture.key) {
-          case "chip-cannon": this.cannonLevel++; break;
-          case "chip-missile": this.missileLevel++; break;
+          case "chip-cannon": this.cannonLevel = Math.min(maxWeaponLevel, this.cannonLevel + 1); break;
+          case "chip-missile": this.missileLevel = Math.min(maxWeaponLevel, this.missileLevel + 1); break;
           case "chip-double":
             if (!this.doubleLevel) this.double.setPosition(this.ship.x, this.ship.y + 18).setVisible(true);
-            this.doubleLevel++;
+            this.doubleLevel = Math.min(maxWeaponLevel, this.doubleLevel + 1);
             break;
         }
         this.positionPods();
@@ -381,9 +383,9 @@ class FlightScene extends Phaser.Scene {
       this.combatAudio.projectile("bolt");
       this.shots.push(shot.setDepth(-1));
       for (const pod of this.pods) {
-        if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setRotation(pod.rotation).setDepth(-1));
+        if (pod.visible) this.shots.push(beam(this, pod.x, pod.y - 9, "bolt").setDepth(-1));
       }
-      this.fireCooldown = Math.max(0.07, 0.12 - Math.max(0, this.cannonLevel - 2) * 0.01);
+      this.fireCooldown = this.cannonLevel === maxWeaponLevel ? 0.09 : 0.12;
     }
     if ((this.pointer || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
       this.launchMissiles(this.missileLevel);
@@ -393,7 +395,7 @@ class FlightScene extends Phaser.Scene {
     if ((this.pointer || pad?.buttons[1]?.pressed) && this.doubleLevel && this.doubleCooldown <= 0) {
       this.shots.push(beam(this, this.double.x, this.double.y - 8, "double-bolt"));
       this.combatAudio.projectile("bolt");
-      this.doubleCooldown = Math.max(0.12, 0.32 - 0.04 * (this.doubleLevel - 1));
+      this.doubleCooldown = 0.32 - 0.06 * (this.doubleLevel - 1);
     }
     this.stats.fired += this.shots.length - previousShots;
     this.drawLocks();
@@ -480,7 +482,7 @@ class FlightScene extends Phaser.Scene {
       `Destroyed    ${kills}`,
       `Wardens      ${wardens}`,
       `Chips        ${chips}`,
-      `Cannon +${this.cannonLevel}  Missiles ${this.missileLevel}  Double ${this.doubleLevel}`,
+      `Cannon ${this.cannonLevel}/4  Missiles ${this.missileLevel}/4  Double ${this.doubleLevel}/4`,
       `Hits taken   ${hitsTaken}`,
     ].join("\n");
   }
@@ -588,9 +590,8 @@ class FlightScene extends Phaser.Scene {
   private positionPods() {
     this.pods.forEach((pod, index) => {
       const side = index === 0 ? 1 : -1;
-      pod.setVisible(this.cannonLevel > index);
+      pod.setVisible(this.cannonLevel >= index + 2);
       pod.setPosition(Phaser.Math.Clamp(this.ship.x + side * 15, 4, 356), this.ship.y + 3);
-      pod.setRotation(this.cannonLevel >= 2 ? side * Math.PI / 15 : 0);
     });
   }
 
