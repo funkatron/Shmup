@@ -332,3 +332,10 @@ Added a dedicated bottom row for an eight-way directional pad and separate B, Y 
 
 - [x] TypeScript and production build. Simulated simultaneous steering, cannon and missiles, a direction change, independent cancellation, loss of pointer capture and formation selection. Drone locks and the pickup demo also passed their simulation checks.
 - [ ] Check two-thumb reach on physical iPad.
+
+## 2026-11-25 · Glass Meridian · PR #1
+
+Designed ten carrier passes across four districts, with authored scout paths, changing architecture, two-lane gaps in missile curtains, and a three-second approach. The 192-HP Super Warden introduces twin emitter fans, alternating curtains and a faster core phase. Destruction ends the scored run. [Route and encounter sketch](../docs/glass-meridian.svg)
+
+- [x] TypeScript and production build. Simulated the complete timeline, all district transitions, all three boss phases, the 10,000-point award and terminal clear state.
+- [ ] Physical iPad readability, frame pacing and difficulty with the SN30 Pro.

@@ -8,7 +8,7 @@ Pushes to `controller-flight` automatically rebuild the [public iPad preview](ht
 
 [Watch the flight demo](https://funkatron.github.io/Shmup/?mode=demo) to see a power-up collected in live combat. Follow the green ring from the carrier to its dropped chip. The fighter flies through the chip and demonstrates its new twin cannon before the repeating control lessons begin. The highlighted face button follows each lesson on the SN30 Pro. **Play Surrender** starts a fresh scored flight. Every flight opens with a 2.6-second descent from a close side view to overhead.
 
-Each collected chip earns 50 points. Scout, raider, frigate and carrier kills earn 100, 200, 400 and 500 points respectively. Defeating the Warden earns 5,000. The score appears above the playfield and on the pause panel.
+Each collected chip earns 50 points. Scout, raider, frigate and carrier kills earn 100, 200, 400 and 500 points respectively. Defeating the Super Warden earns 10,000. The score appears above the playfield and on the pause panel.
 
 ## Play the crossing encounter
 
@@ -76,6 +76,16 @@ See the [power-up design study](docs/power-ups.md) for the next carrier experime
 
 Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
 
-The **Warden** enters after 40 seconds and takes over the arena. Its 96 HP are shown on a twelve-segment hull meter. The left wing cracks at 72 HP, the right at 48, and the core splits at 24. Listen for a short crack, a stepped crunch and a low falling rumble at those three transitions. Short pink traces announce an aimed five-shot fan. At half hull the fan widens to seven. Missiles deal triple bolt damage. Defeat it to resume carrier passes with your upgrades. [Jump to the boss with the base cannon](https://funkatron.github.io/Shmup/?encounter=boss).
+## Stage 1 · Glass Meridian
 
-Four colored corner marks identify an enemy tracked by your missiles. Missiles and their trails take the color of their current target. Several missiles can share a lock. The marks disappear when the final lock ends.
+[Stage storyboard](docs/glass-meridian.svg) · [Play the stage](https://funkatron.github.io/Shmup/) · [Practice the Super Warden](https://funkatron.github.io/Shmup/?encounter=boss)
+
+| Flight time | District | What to watch |
+|---|---|---|
+| 0–20 s | Neon Port | Two carrier passes among crossing scout wings. Use the opening to build your cannon and find missiles. |
+| 20–50 s | Switchyard | Crossed rails mark the first missile curtains. Amber-pink chevrons announce occupied lanes 850 ms before launch. Fly through the two unmarked lanes. |
+| 50–80 s | Arc Reactor | Coil roofs pass beneath double-arc scout runs. Three curtains per pass move the opening across the screen. |
+| 80–100 s | Crown Gate | High trusses, mirrored flights and the last carriers. Ships break away for the final three seconds. |
+| 100 s onward | Super Warden | Twin emitters fire aimed fans. Below two-thirds hull the boss alternates fans and curtains. The last third brings ten-shot fans and faster volleys. |
+
+The rotating crown surrounds a 192-HP hull. Damage cracks persist at quarter-hull intervals. Defeat the boss to bank 10,000 points and see the final score. **Fly again** starts a fresh run.

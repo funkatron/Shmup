@@ -18,6 +18,7 @@
     #lesson b {color:#9dfff0;font-size:1.3em} #lesson[data-step="0"] .pad,#lesson:not([data-step="0"]) b{display:none} #flight {position:relative}
     #build { white-space: pre-line; }
     #flight { min-height: 0; overflow: hidden; }
+    #result {position:fixed;z-index:4;top:42%;left:50%;transform:translateX(-50%);padding:20px;background:#061119;color:#93fff2;border:1px solid currentColor;text-align:center;font:16px monospace} #result a{color:white} #stage{color:#e9be83}
     #stats { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; padding: 1em 1.4em; background: #060d12; color: #acf5df; border: 1px solid #65a99d; font: 15px/1.6 monospace; pointer-events: none; }
     #pause { width: 5em; }
     #deck { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:6px max(12px,env(safe-area-inset-right)) max(6px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); background:#060e15; border-top:1px solid #25404a; user-select:none; -webkit-user-select:none; }
@@ -33,12 +34,13 @@
   </style>
 </head>
 <body>
-  <header><button id="sound" type="button" aria-pressed="false">Enable sound</button><button id="pause" type="button">Pause</button><div id="controller">Hold to fire · Drag to steer</div><div id="build"></div><div class="hud"><strong>SURRENDER</strong><output id="score">000000</output><a id="mode" href="?mode=demo" target="_blank" rel="noopener">Watch demo ↗</a></div></header>
+  <header><button id="sound" type="button" aria-pressed="false">Enable sound</button><button id="pause" type="button">Pause</button><div id="controller">Hold to fire · Drag to steer</div><div id="build"></div><div class="hud"><strong>SURRENDER</strong><span id="stage">Neon Port</span><output id="score">000000</output><a id="mode" href="?mode=demo" target="_blank" rel="noopener">Watch demo ↗</a></div></header>
   <main id="flight"><div id="lesson" hidden><b aria-hidden="true">✥</b><span class="pad" aria-hidden="true"><i>X</i><i>B</i><i>Y</i><i>A</i></span> <span class="caption"></span></div></main>
   <section id="deck" aria-label="Flight controls">
     <button id="steer" type="button" aria-label="Eight-way directional pad"><span>▲</span><span>◀</span><span>·</span><span>▶</span><span>▼</span></button>
     <div class="actions"><button id="missile-trigger" type="button"><strong>Y</strong>Missiles</button><button id="cannon-trigger" type="button"><strong>B</strong>Cannon</button><button id="formation" type="button" aria-label="Cycle drone formation"><strong>X</strong><span id="formation-name">Ahead</span></button></div>
   </section>
+  <aside id="result" hidden><strong>GLASS MERIDIAN CLEAR</strong><p>Final score <output></output></p><a href="./">Fly again</a></aside>
   <pre id="stats" aria-label="Flight statistics" hidden></pre>
   <script type="module" src="/src/main.ts"></script>
 </body>

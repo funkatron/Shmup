@@ -1,3 +1,4 @@
+import { route } from "./meridian";
 import { drawArrival } from "./arrival";
 import { City } from "./city";
 import Phaser from "phaser";
@@ -7,7 +8,7 @@ import { prepareTraces, beam } from "./beam";
 import { CombatAudio, fragments, type Hull } from "./impact";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
-const wardenMaxHp = 96;
+const wardenMaxHp = 192;
 const wardenStages = [
   { texture: "warden", cue: null },
   { texture: "warden-cracked", cue: "wingCrack" },
@@ -78,7 +79,10 @@ class FlightScene extends Phaser.Scene {
   private nextFan = 0;
   private aim = 0;
   private warned = false;
-  private untilBoss = 40;
+  private untilBoss = route.length * 10;
+  private cleared = false;
+  private salvo = 0;
+  private stageInk!: Phaser.GameObjects.Graphics;
   private carrierTime = 0;
   private chipDrift = 0;
   private stats = newFlightStats();
@@ -130,7 +134,10 @@ class FlightScene extends Phaser.Scene {
     this.target = beam(this, -12, 125, "raider");
     this.boss = beam(this, 180, -30, "warden").setVisible(false);
     this.bossMeter = this.add.graphics().setDepth(1);
-    this.untilBoss = new URLSearchParams(location.search).get("encounter") === "boss" ? 0 : 40;
+    this.untilBoss = new URLSearchParams(location.search).get("encounter") === "boss" ? 0 : route.length * 10;
+    this.cleared = false;
+    this.salvo = 0;
+    this.stageInk = this.add.graphics().setDepth(-0.5);
     this.carrierTime = 0;
     this.carrier = beam(this, 370, 180, "carrier");
     this.chip = beam(this, 0, 0, "chip-cannon").setVisible(false);
@@ -181,6 +188,7 @@ class FlightScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number) {
+    if (this.cleared) return;
     const pads = navigator.getGamepads?.() ?? [];
     const pad = Array.from(pads).find(controller => controller?.connected);
     const startHeld = pad?.buttons[9]?.pressed ?? false;
@@ -194,7 +202,7 @@ class FlightScene extends Phaser.Scene {
     if (this.paused) return;
 
     const seconds = Math.min(delta, 50) / 1000;
-    this.city?.draw(seconds, this.ship.x);
+    this.city?.draw(seconds, this.ship.x, Math.floor((route.length * 10 - this.untilBoss) / 10));
     this.farScroll = (this.farScroll + 18 * seconds) % 192;
     this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
     this.ledgeScroll = (this.ledgeScroll + 148 * seconds) % 192;
@@ -219,6 +227,13 @@ class FlightScene extends Phaser.Scene {
     const previousTime = this.carrierTime % 5;
     let passTime = previousTime;
     this.untilBoss -= seconds;
+    const elapsed = route.length * 10 - this.untilBoss;
+    const measure = Math.min(route.length - 1, Math.floor(elapsed / 10));
+    const section = route[measure];
+    const stageLabel = document.getElementById("stage")!;
+    const title = this.untilBoss <= 0 ? "SUPER WARDEN" : section.sector;
+    if (stageLabel.textContent !== title) stageLabel.textContent = title;
+    this.stageInk.clear();
     if (this.untilBoss <= 0) {
       this.updateBoss(seconds);
     } else {
@@ -239,15 +254,36 @@ class FlightScene extends Phaser.Scene {
       if (this.frigate.visible && lastWaveTime < 6 && this.carrierTime >= 6) this.fireFrigateMissiles();
       this.target.x = fieldX(-12 + 96 * passTime);
       this.carrier.x = fieldX(370 - 76 * this.carrierTime);
+      if (section.gate >= 0 && this.untilBoss > 3) {
+        const beats = measure >= 5 ? [2, 5, 8] : [4];
+        for (const beat of beats) {
+          const gap = (section.gate + beats.indexOf(beat)) % 8;
+          if (this.carrierTime >= beat - 0.85 && this.carrierTime < beat) {
+            this.stageInk.lineStyle(1, 0xff8080, 0.8);
+            for (let lane = 0; lane < 9; lane++) {
+              if (lane === gap || lane === gap + 1) continue;
+              const x = 20 + lane * 40;
+              this.stageInk.lineBetween(x - 4, 13, x, 24).lineBetween(x, 24, x + 4, 13);
+            }
+          }
+          if (lastWaveTime < beat && this.carrierTime >= beat) {
+            this.combatAudio.projectile("incoming");
+            for (let lane = 0; lane < 9; lane++) {
+              if (lane === gap || lane === gap + 1) continue;
+              this.enemyShots.push({ sprite: beam(this, 20 + lane * 40, 14, "enemy-missile"), vx: 0, vy: 168 });
+            }
+          }
+        }
+      }
       this.scouts.forEach(({ sprite, down, entry, fromRight, altitude, leader }) => {
         const age = this.carrierTime - entry;
         const progress = -16 + (fromRight ? 148 : 102) * age;
         sprite.setVisible(!down && age >= 0 && progress <= 376);
         if (!sprite.visible) return;
-        const arc = Math.sin(Math.PI * progress / 360);
+        const arc = section.bend * Math.sin((measure >= 5 ? 2 : 1) * Math.PI * progress / 360);
         sprite.setFlipX(fromRight !== this.mirrored);
         sprite.setPosition(fieldX(fromRight ? 360 - progress : progress),
-          altitude + (fromRight ? 300 - 24 * arc : 211 + 42 * arc));
+          section.depth + altitude + (fromRight ? 300 - 24 * arc : 211 + 42 * arc));
         // One fan per formation. A close pass gives the fighter room to escape.
         if (leader && age >= 1.20 && lastWaveTime < entry + 1.20 &&
             Math.hypot(sprite.x - this.ship.x, sprite.y - this.ship.y) >= 90) {
@@ -261,6 +297,9 @@ class FlightScene extends Phaser.Scene {
           }
         }
       });
+    }
+    if (this.untilBoss > 0 && this.untilBoss < 3) {
+      for (const actor of this.actors) actor.setVisible(false);
     }
     if (this.chip.visible) {
       this.chip.x += this.chipDrift * seconds;
@@ -472,7 +511,7 @@ class FlightScene extends Phaser.Scene {
   }
 
   private halfWidth(actor: Phaser.GameObjects.Image) {
-    if (actor === this.boss) return 43;
+    if (actor === this.boss) return 58;
     if (actor === this.carrier || actor === this.frigate) return 16;
     return actor === this.target ? 12.5 : 9;
   }
@@ -515,7 +554,7 @@ class FlightScene extends Phaser.Scene {
         this.boss.setTint(0xffdddd);
       }
       if (this.bossHp <= 0) {
-        this.addScore(5000);
+        this.addScore(10000);
         this.stats.wardens++;
         this.boss.setVisible(false);
         this.bossMeter.clear();
@@ -524,11 +563,15 @@ class FlightScene extends Phaser.Scene {
         this.burst(this.boss.x + 31, this.boss.y);
         for (const shot of this.enemyShots) shot.sprite.destroy();
         this.enemyShots = [];
-        this.carrierTime = 0;
-        this.carrier.setVisible(true);
-        this.target.setVisible(true);
-        for (const scout of this.scouts) scout.down = false;
-        this.untilBoss = 40;
+        if (this.demo) {
+          location.reload();
+        } else {
+          this.cleared = true;
+          document.getElementById("stage")!.textContent = "MERIDIAN CLEAR";
+          const result = document.getElementById("result")!;
+          result.hidden = false;
+          result.querySelector("output")!.textContent = String(this.score).padStart(6, "0");
+        }
       }
     } else if (actor === this.carrier) {
       this.addScore(500);
@@ -763,6 +806,7 @@ class FlightScene extends Phaser.Scene {
 
   private togglePause() {
     this.clearTouchControls();
+    if (this.cleared) return;
     this.paused = !this.paused;
     this.pointer = undefined;
     this.showStats();
@@ -792,7 +836,7 @@ class FlightScene extends Phaser.Scene {
 
   private updateBoss(seconds: number) {
     if (!this.boss.visible) {
-      this.boss.setTexture("warden").setPosition(180, -30).setVisible(true);
+      this.boss.setScale(0.45).setTexture("warden").setPosition(180, -30).setVisible(true);
       this.frigate.setVisible(false);
       this.bossHp = wardenMaxHp;
       this.bossAge = 0;
@@ -811,25 +855,43 @@ class FlightScene extends Phaser.Scene {
       g.lineStyle(2, 0xff996e, 0.9).lineBetween(this.boss.x - 29 + i*5, this.boss.y - 28,
         this.boss.x - 26 + i*5, this.boss.y - 28);
     }
+    const phase = this.bossHp > 128 ? 0 : this.bossHp > 64 ? 1 : 2;
+    // Rotating crown and twin emitter pods sit outside the damage-stage hull.
+    for (const side of [-1, 1]) {
+      const x = this.boss.x + side * 55, y = this.boss.y + 8;
+      g.lineStyle(2, 0xff8559, 0.95).strokeCircle(x, y, 7);
+      g.lineBetween(x, y - 7, this.boss.x + side * 36, y - 23);
+    }
+    g.lineStyle(1, 0xe765ff, 0.8);
+    for (let i = 0; i < 8; i++) {
+      const a = this.bossAge + i * Math.PI / 4;
+      g.lineBetween(this.boss.x + 19*Math.cos(a), this.boss.y + 13*Math.sin(a),
+        this.boss.x + 25*Math.cos(a), this.boss.y + 18*Math.sin(a));
+    }
     if (this.bossAge < this.nextFan - 0.65) return;
     if (!this.warned) {
       this.aim = Math.atan2(this.ship.y - this.boss.y - 16, this.ship.x - this.boss.x);
       this.combatAudio.cue("charge");
       this.warned = true;
     }
-    const count = this.bossHp <= wardenMaxHp / 2 ? 7 : 5;
+    const curtain = phase > 0 && this.salvo % 2 === 1;
+    const count = curtain ? 9 : 6 + phase * 2;
     for (let i = 0; i < count; i++) {
-      const angle = this.aim + (i - (count - 1) / 2) * 0.24;
+      if (curtain && Math.abs(i - (2 + this.salvo % 5)) <= 1) continue;
+      const side = i % 2 ? 1 : -1;
+      const angle = curtain ? Math.PI / 2 : this.aim + (i - (count - 1) / 2) * 0.19;
       const dx = Math.cos(angle), dy = Math.sin(angle);
-      const x = this.boss.x, y = this.boss.y + 16;
+      const x = curtain ? 20 + 40*i : this.boss.x + side * 55;
+      const y = curtain ? 8 : this.boss.y + 8;
       g.lineStyle(1, 0xff528c, 0.85).lineBetween(x + 12*dx, y + 12*dy, x + 30*dx, y + 30*dy);
       if (this.bossAge >= this.nextFan) {
-        this.enemyShots.push({sprite: beam(this, x, y, "incoming"), vx: 145*dx, vy: 145*dy});
+        this.enemyShots.push({sprite: beam(this, x, y, "incoming"), vx: (155+phase*20)*dx, vy: (155+phase*20)*dy});
       }
     }
     if (this.bossAge >= this.nextFan) {
       this.combatAudio.projectile("incoming");
-      this.nextFan += this.bossHp <= wardenMaxHp / 2 ? 1.40 : 1.85;
+      this.salvo++;
+      this.nextFan += [1.75, 1.40, 1.12][phase];
       this.warned = false;
     }
   }

@@ -10,7 +10,7 @@ export class City {
     this.ink = scene.add.graphics().setDepth(-4).setBlendMode(Phaser.BlendModes.ADD);
   }
 
-  draw(seconds: number, shipX: number) {
+  draw(seconds: number, shipX: number, district: number) {
     this.scroll += seconds * 62;
     if (this.scroll >= 96) {
       this.scroll -= 96;
@@ -32,6 +32,21 @@ export class City {
       const id = this.block - row;
       const avenue = 28 * Math.sin(id * 0.42);
       const next = 28 * Math.sin((id - 1) * 0.42);
+      if (district >= 2) {
+        g.lineStyle(1, district >= 8 ? 0xcb8562 : 0x658aac, 0.58);
+        if (district < 5) {
+          for (const offset of [-9, 9]) path([project(-85+offset,y,3), project(85+offset,y+96,3)]);
+        } else if (district < 8) {
+          const coil = Array.from({length: 13}, (_, i) => {
+            const a = i * Math.PI / 6;
+            return project(avenue + 33*Math.cos(a), y + 46 + 32*Math.sin(a), 7);
+          });
+          path(coil);
+        } else {
+          path([project(-90,y,0), project(-90,y,40), project(-58,y+12,56),
+            project(58,y+12,56), project(90,y,40), project(90,y,0)]);
+        }
+      }
       for (const side of [-1, 1]) {
         g.lineStyle(1, 0x52648b, 0.42);
         path([project(avenue + side * 31, y, 0), project(next + side * 31, y + 96, 0)]);
