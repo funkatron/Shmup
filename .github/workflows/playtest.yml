@@ -11,7 +11,7 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: controller-flight
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'controller-flight' || github.event.workflow_run.head_sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
