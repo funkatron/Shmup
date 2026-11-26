@@ -4,7 +4,7 @@ on:
   workflow_run:
     workflows: [Preview branch updated]
     types: [completed]
-    branches: [controller-flight]
+    branches: [dev-preview]
 
 permissions:
   contents: read
@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && 'controller-flight' || github.event.workflow_run.head_sha }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'dev-preview' || github.event.workflow_run.head_sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
