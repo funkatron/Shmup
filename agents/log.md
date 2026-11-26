@@ -410,6 +410,13 @@ Combat still substeps in slices of at most 50ms. `City.draw` runs once for the s
 - [x] Vitest, including a 100ms hitch that advances 100ms and asks for one city interval, and a 200ms hitch that draws only the 150ms that was simulated.
 - [ ] iPad frame time on a busy Neon Port pass, now that a hitch cannot redraw the city three times.
 
+## 2026-11-26 · Tests gate the playtest
+
+A push to `dev-preview` now runs `npm test` and `tsc --noEmit` before it asks Pages to build. The playtest workflow still publishes only after that job succeeds. Collecting a chip banks a reserve only when cannon, missiles, and four drones are already full. A patrol Warden is counted only when the hit that finishes its hull lands. A plain frigate is not.
+
+- [x] Vitest covers the reserve rule and the patrol strike. `tsc --noEmit` passed locally.
+- [ ] The GitHub job on this push is the first remote run. iPad playtest is still open.
+
 ## 2026-11-26 · dev-preview
 
 The playtest branch is `dev-preview`. Pushes to that name request the Pages build. The older name `controller-flight` remains on the remote until the open pull request is retargeted.

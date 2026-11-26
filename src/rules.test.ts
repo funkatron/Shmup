@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 import {
   cannonRestSteps,
   cityRouteTime,
+  collectChip,
   frameStep,
   hullHalfWidth,
   loadoutComplete,
   nextChip,
   simSlices,
+  strikePatrol,
   type ChipKind,
   type ChipLoadout,
 } from "./rules";
@@ -41,11 +43,30 @@ describe("nextChip", () => {
     expect(loadoutComplete(loadout)).toBe(true);
   });
 
+  it("banks a reserve only when cannon, missiles, and four drones are full", () => {
+    const full = { cannonLevel: 4, missileLevel: 4, drones: 4 };
+    expect(collectChip("chip-cannon", full).effect).toBe("reserve");
+    expect(collectChip("chip-missile", full).effect).toBe("reserve");
+    expect(collectChip("chip-double", full).effect).toBe("reserve");
+    expect(collectChip("chip-double", { cannonLevel: 4, missileLevel: 4, drones: 3 }).effect).toBe("drone");
+    expect(collectChip("chip-cannon", { cannonLevel: 2, missileLevel: 4, drones: 4 })).toEqual({ effect: "cannon", level: 3 });
+    expect(collectChip("chip-missile", { cannonLevel: 4, missileLevel: 1, drones: 4 })).toEqual({ effect: "missile", level: 2 });
+    expect(collectChip("chip-double", { cannonLevel: 1, missileLevel: 0, drones: 4 }).effect).toBe("none");
+  });
+
   it("keeps cycling once every track is full so the pickup can bank a reserve", () => {
     const loadout = { cannonLevel: 4, missileLevel: 4, drones: 4 };
     expect(nextChip(0, loadout)).toEqual({ kind: "cannon", nextIndex: 1 });
     expect(nextChip(1, loadout)).toEqual({ kind: "missile", nextIndex: 2 });
     expect(nextChip(2, loadout)).toEqual({ kind: "double", nextIndex: 0 });
+  });
+});
+
+describe("strikePatrol", () => {
+  it("counts a Warden only when the patrol hull reaches zero", () => {
+    expect(strikePatrol(10, 3)).toEqual({ hp: 7, countWarden: false });
+    expect(strikePatrol(2, 3)).toEqual({ hp: 0, countWarden: true });
+    expect(strikePatrol(0, 1)).toEqual({ hp: 0, countWarden: false });
   });
 });
 

@@ -6,7 +6,7 @@ import Phaser from "phaser";
 import { prepareTraces, beam } from "./beam";
 
 import { CombatAudio, fragments, type Hull } from "./impact";
-import { cannonRestSteps, cityRouteTime, frameStep, hullHalfWidth, maxWeaponLevel, nextChip } from "./rules";
+import { cannonRestSteps, cityRouteTime, collectChip, frameStep, hullHalfWidth, maxWeaponLevel, nextChip, strikePatrol } from "./rules";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const missileSpeedScale = 0.7;
@@ -349,16 +349,19 @@ class FlightScene extends Phaser.Scene {
         this.stats.chips++;
         this.addScore(50);
         this.combatAudio.cue("pickup");
-        if (this.cannonLevel === maxWeaponLevel && this.missileLevel === maxWeaponLevel && this.drones.length === maxWeaponLevel) {
+        const reward = collectChip(this.chip.texture.key, {
+          cannonLevel: this.cannonLevel,
+          missileLevel: this.missileLevel,
+          drones: this.drones.length,
+        });
+        if (reward.effect === "reserve") {
           this.reserves++;
-        } else switch (this.chip.texture.key) {
-          case "chip-cannon": this.cannonLevel = Math.min(maxWeaponLevel, this.cannonLevel + 1); break;
-          case "chip-missile": this.missileLevel = Math.min(maxWeaponLevel, this.missileLevel + 1); break;
-          case "chip-double":
-            if (this.drones.length < maxWeaponLevel) {
-              this.deployDrone();
-            }
-            break;
+        } else if (reward.effect === "cannon") {
+          this.cannonLevel = reward.level;
+        } else if (reward.effect === "missile") {
+          this.missileLevel = reward.level;
+        } else if (reward.effect === "drone") {
+          this.deployDrone();
         }
         this.positionPods();
         this.burst(this.chip.x, this.chip.y);
@@ -632,8 +635,9 @@ class FlightScene extends Phaser.Scene {
       this.chipDrift = this.chip.x < 180 ? 20 : -20;
     } else if (actor === this.frigate) {
       if (this.patrolHp > 0) {
-        this.patrolHp = Math.max(0, this.patrolHp - damage);
-        if (this.patrolHp) {
+        const strike = strikePatrol(this.patrolHp, damage);
+        this.patrolHp = strike.hp;
+        if (!strike.countWarden) {
           this.flashHull(actor, this.patrolHp <= 5 ? "warden-cracked" : "warden");
           return;
         }

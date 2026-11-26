@@ -24,6 +24,32 @@ export function loadoutComplete(loadout: ChipLoadout): boolean {
   return trackFull("cannon", loadout) && trackFull("missile", loadout) && trackFull("double", loadout);
 }
 
+export type ChipReward =
+  | { effect: "reserve" }
+  | { effect: "cannon"; level: number }
+  | { effect: "missile"; level: number }
+  | { effect: "drone" }
+  | { effect: "none" };
+
+export function collectChip(textureKey: string, loadout: ChipLoadout): ChipReward {
+  if (loadoutComplete(loadout)) return { effect: "reserve" };
+  if (textureKey === "chip-cannon") {
+    return { effect: "cannon", level: Math.min(maxWeaponLevel, loadout.cannonLevel + 1) };
+  }
+  if (textureKey === "chip-missile") {
+    return { effect: "missile", level: Math.min(maxWeaponLevel, loadout.missileLevel + 1) };
+  }
+  if (textureKey === "chip-double" && loadout.drones < maxWeaponLevel) return { effect: "drone" };
+  return { effect: "none" };
+}
+
+// A patrol counts as a Warden only when this hit finishes its hull. A plain frigate has no patrol HP.
+export function strikePatrol(hp: number, damage: number): { hp: number; countWarden: boolean } {
+  if (hp <= 0) return { hp: 0, countWarden: false };
+  const next = Math.max(0, hp - damage);
+  return { hp: next, countWarden: next === 0 };
+}
+
 // Skip a track that is already full. Once every track is full, follow the cycle and bank a reserve.
 export function nextChip(index: number, loadout: ChipLoadout): { kind: ChipKind; nextIndex: number } {
   if (loadoutComplete(loadout)) {
