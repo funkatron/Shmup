@@ -388,3 +388,17 @@ Three district patrols use a 10-HP Warden in the missile-frigate slot. Both Ward
 
 - [x] TypeScript and production build. Exercised patrol hits, damage-stage flash textures, boss hit width and both audio buffers at 48 kHz.
 - [ ] Check growl balance and hull flashes on iPad.
+
+## 2026-11-26 · Review fixes
+
+Chip drops skip a track that is already full, so the cannon chip after level 4 becomes a missile chip instead of an empty pickup. Reserves still start only when cannon, missiles, and four drones are all full. The cannon rests for two steps after the fourth shot. Super Warden and patrol hit width follow the drawn 104px hull (about 30px and 10px of half-width). A frame keeps up to three 50ms slices and carries the remainder. Boss practice locks the city origin at 77.4s, Crown Gate, instead of the end of the route during the side-view arrival. Destroying a patrol Warden increments the Wardens stat. The README names the missile button Y and records the 90px scout hold. `docs/power-ups.md` now points at the live rules. Version stays `0.0.0`; 0.1.0 is the recommended milestone and waits for authorization.
+
+The Pages workflow edit is on `publish-triggering-commit`, opened against `main`: cancel an older playtest build, and check out the triggering commit. It is not part of this branch.
+
+- [x] Vitest: 8 tests in `src/rules.test.ts`. `tsc --noEmit` with the repo flags and with `tsconfig.json`. Production build.
+- [x] Chromium at 834×1112. Normal arrival origin `-2.6`, then the overhead ship over Neon Port. With cannon already at level 4, the next carrier drop was `chip-missile` and collecting it raised missiles to 1. Boss practice origin `77.4` during arrival, then the stage label `SUPER WARDEN`. `/favicon.svg` returned 200 and no other requests failed.
+- [ ] iPad Safari with the Lite 2: cannon rest, the narrower Warden hits, chip value after a full cannon, Crown Gate behind boss practice, and frame pacing.
+
+## 2026-11-26 · Roadmap
+
+Wrote [the roadmap](roadmap.md) after a staff pass on this uncommitted tree. Phases 0–5 land the diffs, draw the city once per frame, playtest on iPad, authorize `0.1.0`, run tests on push, and tune the city only if the iPad is slow. Phases 6–9 are the later work: split `FlightScene` where a test needs a seam, rewrite the impact synth when a cue is wrong, redesign touch when the deck fails a session, and add a second stage after `0.1.0`. The next move is still phase 0. Version stays `0.0.0`.

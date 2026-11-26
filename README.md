@@ -19,12 +19,12 @@ Each collected chip earns 50 points. Scout, raider, frigate and carrier kills ea
 | D-pad or left stick | Steer in eight directions at 210 logical pixels per second. Release to stop. |
 | Start (+) | Press once to pause and see flight stats. Press again to resume. |
 | B · bottom face button | Hold for four volleys followed by two silent steps. Release and press to start a fresh burst. Start with one bolt. The first green chip adds a parallel bolt, the second adds a third parallel lane, and the third adds a fourth lane and increases the firing rate. |
-| A · left face button | Fire homing missiles. Each cyan arrow chip adds a pair per volley, up to eight missiles. |
+| Y · left face button | Fire homing missiles. Each cyan arrow chip adds a pair per volley, up to eight missiles. This is gamepad button 2, the same Y control shown on the deck and in the lesson diagram. |
 | Violet drone chip | Each live drone automatically fires a short violet beam that strikes the first enemy in its path. Each violet twin-diamond pickup adds one drone up to four, including replacements after losses. |
 | SN30 Pro X · top face button | Cycle Ahead → Free → Defensive → Roll → Spread. The formation button does the same on touch. Ahead forms a forward line. Free pursues enemies and aims at them. Defensive covers the ship with a wider interception radius. Roll orbits the fighter. Spread places drones on diagonals. In offensive formations, each drone aims at a distinct enemy marked by a violet ring. Extra drones wait for an available target. In Defensive formation drones lock onto hostile projectiles and shoot them down, acquiring those nearest the fighter first. A drone survives two hits. The third destroys it. Continuous contact with one hull counts once until separation. |
 | Red wireframe ship | Crosses every five seconds. A direct hit produces a gold burst. |
-| Orange scouts | Four formations cross each carrier pass. Each leader can fire a three-shot fan. Destroy the leader early to cancel its volley. Two higher formations arrive alongside the frigate in the second half. |
-| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Each new flight starts with the base cannon. Destroyed carriers cycle through cannon, missile, and drone chips. Touch-and-hold fires all equipped weapons. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. |
+| Orange scouts | Four formations cross each carrier pass. Each leader can fire a three-shot fan when it is at least 90 logical pixels from the fighter. A closer pass holds the fan so there is room to escape. Destroy the leader early to cancel its volley. Two higher formations arrive alongside the frigate in the second half. |
+| Green cargo carrier | Enters from the right at the start and switches banks every ten seconds. Each new flight starts with the base cannon. Destroyed carriers drop the next cannon, missile, or drone chip that can still level up, skipping a track that is already full. Touch-and-hold fires all equipped weapons. Missiles independently seek the least-targeted enemy ahead and favor the nearest when tied. A lone boss draws the whole volley. |
 | Coral twin-tube frigate | Crosses above the raider and launches two pink missiles aimed at your position. Sidestep after launch to dodge. |
 | Magenta diamond | A surviving target fires one second into its pass. The shot travels straight toward your position at launch. |
 
@@ -32,7 +32,7 @@ Every other carrier pass mirrors the raider and both scout flights too. Sound st
 
 To try the dodge, let the target fire first. Move across the diamond’s path, then hold fire and sweep back into position. A hit on your ship flashes and makes a short, crunchy low strike. Play continues. A rising four-note chime marks chip collection, held fire gives a rapid cannon report, each missile volley launches with a rising exhaust roar, and the Warden winds up audibly as its aim traces appear.
 
-Each weapon caps at level 4. With level-four cannon and missiles and four active drones, every additional chip banks one reserve drone. When a drone is destroyed, a reserve launches at full health. Pause to see the reserve count. The pause panel shows all three levels and counts individual bolts and missiles that hit out of all projectiles fired. Destroyed includes Wardens. Chips and incoming projectile hits count each contact. A new page load starts a fresh flight.
+Each weapon caps at level 4. With level-four cannon and missiles and four active drones, every additional chip banks one reserve drone. When a drone is destroyed, a reserve launches at full health. Pause to see the reserve count. The pause panel shows all three levels and counts individual bolts and missiles that hit out of all projectiles fired. Destroyed includes Wardens. The Wardens count includes each patrol Warden and the Super Warden. Chips and incoming projectile hits count each contact. A new page load starts a fresh flight.
 
 ### Compare the parallax
 
@@ -72,7 +72,7 @@ The [Musha Aleste flight study](docs/musha-aleste.md) breaks down Edward’s Sta
 
 The player bolt makes a short descending zap. The aimed raider round has a longer rising cue. Scouts and raiders explode one octave down, carriers two octaves down. Each explosion has two damped echoes. For an A/B comparison, use `?pitch=0&echo=off` for the original explosion mix, or set `pitch=-12` or `pitch=-24` to use one pitch across all hulls.
 
-See the [power-up design study](docs/power-ups.md) for the next carrier experiment.
+The live weapon rules are in the controls above. The [power-up design study](docs/power-ups.md) keeps the references and the earlier carrier experiment.
 
 Fly over a procedurally laid-out neon district. Rooftops and service streets pass under the fighter, growing in perspective toward the bottom. The parallax switch also controls the city.
 

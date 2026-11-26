@@ -1,5 +1,7 @@
 # What makes a carrier worth chasing?
 
+The live weapons are the README rules: cannon, missile, and drone chips, four levels each, and a reserve drone once all three tracks are full. This note keeps the references that led there, and the first controller-flight experiment that the current chips replaced.
+
 ## M.U.S.H.A. / Musha Aleste
 
 Power chips strengthen the main shot. Every third chip also earns a drone. Two drones can fly at once, with extras held in reserve to replace losses. Six formations give those drones different jobs. Reverse fires opposite the direction of movement, so a dodge can double as an attack. A separate set of pickups equips a beam, bomb or barrier. Repeating the equipped type raises its level. Taking a hit can cost the special weapon while preserving its level for a later pickup. [Mega Drive manual, pp. 8–11](https://www.oldiesrising.com/noticespdfV2/Sega%20Megadrive/Musha%20Aleste.pdf)

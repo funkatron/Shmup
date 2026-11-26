@@ -6,6 +6,7 @@ import Phaser from "phaser";
 import { prepareTraces, beam } from "./beam";
 
 import { CombatAudio, fragments, type Hull } from "./impact";
+import { cannonRestSteps, cityRouteTime, hullHalfWidth, maxWeaponLevel, nextChip, simSlices } from "./rules";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
 const missileSpeedScale = 0.7;
@@ -20,9 +21,7 @@ const wardenStages = [
 const flightSpeed = 210; // Logical pixels per second.
 
 const lessons = ["Steer · left stick or drag", "Hold B · four cannon volleys", "Hold Y · homing missiles", "Tap X · cycle drone formations"];
-const maxWeaponLevel = 4;
 const formations = ["Ahead", "Free", "Defensive", "Roll", "Spread"] as const;
-const dropOrder = ["cannon", "missile", "double"] as const;
 
 const missileTrailSeconds = 0.50;
 
@@ -86,6 +85,8 @@ class FlightScene extends Phaser.Scene {
   private aim = 0;
   private warned = false;
   private untilBoss = route.length * 10;
+  private bossPractice = false;
+  private simRemainder = 0;
   private cleared = false;
   private salvo = 0;
   private stageInk!: Phaser.GameObjects.Graphics;
@@ -140,7 +141,9 @@ class FlightScene extends Phaser.Scene {
     this.target = beam(this, -12, 125, "raider");
     this.boss = beam(this, 180, -30, "warden").setVisible(false);
     this.bossMeter = this.add.graphics().setDepth(1);
-    this.untilBoss = new URLSearchParams(location.search).get("encounter") === "boss" ? 0 : route.length * 10;
+    this.bossPractice = new URLSearchParams(location.search).get("encounter") === "boss";
+    this.untilBoss = this.bossPractice ? 0 : route.length * 10;
+    this.simRemainder = 0;
     this.cleared = false;
     this.salvo = 0;
     this.stageInk = this.add.graphics().setDepth(-0.5);
@@ -210,8 +213,16 @@ class FlightScene extends Phaser.Scene {
     if (message !== this.status.textContent) this.status.textContent = message;
     if (this.paused) return;
 
+    const stepped = simSlices(delta, this.simRemainder);
+    this.simRemainder = stepped.remainderMs;
+    for (const slice of stepped.slices) this.advance(slice);
+  }
+
+  private advance(deltaMs: number) {
+    const pads = navigator.getGamepads?.() ?? [];
+    const pad = Array.from(pads).find(controller => controller?.connected);
     this.lockCuePlayed = false;
-    const seconds = Math.min(delta, 50) / 1000;
+    const seconds = deltaMs / 1000;
     for (const [actor, remaining] of this.flashes) {
       if (remaining > seconds) this.flashes.set(actor, remaining - seconds);
       else {
@@ -219,7 +230,13 @@ class FlightScene extends Phaser.Scene {
         this.flashes.delete(actor);
       }
     }
-    this.city?.draw(seconds, this.ship.x, route.length * 10 - this.untilBoss + (this.arrival ? this.introTime - 2.6 : 0));
+    this.city?.draw(seconds, this.ship.x, cityRouteTime({
+      bossPractice: this.bossPractice,
+      arriving: Boolean(this.arrival),
+      introTime: this.introTime,
+      untilBoss: this.untilBoss,
+      routeSeconds: route.length * 10,
+    }));
     this.farScroll = (this.farScroll + 18 * seconds) % 192;
     this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
     this.ledgeScroll = (this.ledgeScroll + 148 * seconds) % 192;
@@ -474,7 +491,7 @@ class FlightScene extends Phaser.Scene {
       }
       const step = this.cannonLevel === maxWeaponLevel ? 0.09 : 0.12;
       this.cannonVolley = (this.cannonVolley + 1) % 4;
-      this.fireCooldown += step * (this.cannonVolley === 0 ? 3 : 1);
+      this.fireCooldown += step * cannonRestSteps(this.cannonVolley);
     }
     if ((this.demo && this.lesson === 2 || this.pointer || this.touchFiring("missile-trigger") || pad?.buttons[2]?.pressed) && this.missileLevel && this.missileCooldown <= 0) {
       this.launchMissiles(this.missileLevel);
@@ -535,8 +552,8 @@ class FlightScene extends Phaser.Scene {
   }
 
   private halfWidth(actor: Phaser.GameObjects.Image) {
-    if (actor === this.boss) return 58 * superScale;
-    if (actor === this.frigate && this.patrolHp) return 28;
+    if (actor === this.boss) return hullHalfWidth("super-warden", 0.45 * superScale);
+    if (actor === this.frigate && this.patrolHp) return hullHalfWidth("patrol-warden", 0.2);
     if (actor === this.carrier || actor === this.frigate) return 16;
     return actor === this.target ? 12.5 : 9;
   }
@@ -603,8 +620,13 @@ class FlightScene extends Phaser.Scene {
       this.addScore(500);
       this.carrier.setVisible(false);
       this.explode(this.carrier.x, this.carrier.y, "carrier");
-      this.chip.setTexture("chip-" + dropOrder[this.dropIndex]);
-      this.dropIndex = (this.dropIndex + 1) % dropOrder.length;
+      const drop = nextChip(this.dropIndex, {
+        cannonLevel: this.cannonLevel,
+        missileLevel: this.missileLevel,
+        drones: this.drones.length,
+      });
+      this.dropIndex = drop.nextIndex;
+      this.chip.setTexture("chip-" + drop.kind);
       this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
       this.chipDrift = this.chip.x < 180 ? 20 : -20;
     } else if (actor === this.frigate) {
@@ -614,6 +636,7 @@ class FlightScene extends Phaser.Scene {
           this.flashHull(actor, this.patrolHp <= 5 ? "warden-cracked" : "warden");
           return;
         }
+        this.stats.wardens++;
       }
       this.addScore(400);
       this.frigate.setVisible(false);
