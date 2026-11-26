@@ -1,5 +1,16 @@
 import Phaser from "phaser";
 
+const facades = [0xd169bf, 0xc89a58, 0x46b8ce, 0x77aaf6];
+const crossings = [2, 5, 8];
+
+function mixColor(from: number, to: number, amount: number) {
+  const channel = (shift: number) => {
+    const a = (from >> shift) & 255;
+    return Math.round(a + (((to >> shift) & 255) - a) * amount);
+  };
+  return (channel(16) << 16) | (channel(8) << 8) | channel(0);
+}
+
 // World y grows toward the viewer. Pitch the camera slightly toward the next block.
 export class City {
   private ink: Phaser.GameObjects.Graphics;
@@ -34,26 +45,44 @@ export class City {
       const id = block - row;
       // A block keeps its architecture from first sight to the bottom edge.
       const district = (this.originTime + id * 96 / 62) / 10;
-      const facade = district < 2 ? 0xd169bf : district < 5 ? 0xc89a58 : district < 8 ? 0x46b8ce : 0x77aaf6;
+      const border = crossings.findIndex(at => Math.abs(district - at) < 0.55);
+      let facade = facades[crossings.filter(at => district >= at).length];
+      let passage = 0;
+      if (border >= 0) {
+        const fraction = (district - crossings[border] + 0.55) / 1.1;
+        facade = mixColor(facades[border], facades[border+1], fraction);
+        passage = Math.sin(Math.PI * fraction) ** 2;
+      }
       const avenue = 28 * Math.sin(id * 0.42);
       const next = 28 * Math.sin((id - 1) * 0.42);
       // Landmarks occupy alternating blocks. Project every vertex with the streets
       // so a passing roof or crane stays anchored as the pilot banks.
+      let intensity = 1;
       const stroke = (color: number, vertices: number[][], glow = false, overhead = false) => {
         const screen = vertices.map(([x, offset, h]) => project(x, y + offset, h));
         const pen = overhead ? this.spans : g;
         if (overhead) {
           // A narrow opaque girder interrupts the fighter trace at the crossing.
-          pen.lineStyle(3.5, 0x080c19, 0.96);
+          pen.lineStyle(3.5, 0x080c19, 0.96 * intensity);
           path(screen, pen);
         }
         if (glow) {
-          pen.lineStyle(3, color, 0.16);
+          pen.lineStyle(3, color, 0.16 * intensity);
           path(screen, pen);
         }
-        pen.lineStyle(1, color, 0.86);
+        pen.lineStyle(1, color, 0.86 * intensity);
         path(screen, pen);
       };
+      if (passage > 0) {
+        intensity = passage;
+        for (const bank of [-1,1]) {
+          for (const offset of [80,88]) {
+            stroke(facade, [[avenue+bank*offset,0,6],[next+bank*offset,96,6]], true);
+          }
+          stroke(facade, [[avenue+bank*109,0,0],[avenue+bank*109,0,31],[avenue+bank*84,0,6]]);
+        }
+        intensity = 1 - passage * .94;
+      }
       const phase = this.distance / 62 + id * 1.7;
       const side = (id & 2) ? -1 : 1;
       if (id % 2 === 0 && district < 2) {
@@ -100,6 +129,22 @@ export class City {
         }
         stroke(0xffb459, [[-20,16,87],[-25,16,107],[-9,16,96],[0,16,116],[9,16,96],[25,16,107],[20,16,87],[-20,16,87]], true, true);
       }
+      intensity = 1;
+      // Pairs walk along the outer pavement. Their arms and legs alternate
+      // against the scrolling ground, with a separate gait for each walker.
+      if (id % 3 !== 0) {
+        for (const step of [0, 1]) {
+          const walk = phase * .43 + step * .17;
+          const v = 46 + 32 * Math.sin(walk);
+          const x = avenue + (next - avenue) * v / 96 + side * (99 + step * 7);
+          const stride = 2.5 * Math.sin(phase * 6 + step * 2);
+          const direction = Math.tanh(5 * Math.cos(walk));
+          const person = 0xc0ae9c;
+          stroke(person, [[x-1,v,7],[x,v-1,10],[x+1,v,7],[x,v,5],[x,v+direction,3]]);
+          stroke(person, [[x-2,v+stride,0],[x,v,4],[x+2,v-stride,0]]);
+          stroke(person, [[x-2,v-stride,5],[x,v,6],[x+2,v+stride,5]]);
+        }
+      }
       for (const side of [-1, 1]) {
         g.lineStyle(1, 0x52648b, 0.42);
         path([project(avenue + side * 31, y, 0), project(next + side * 31, y + 96, 0)]);
@@ -123,6 +168,28 @@ export class City {
             for (const v of [.28,.44,.60]) path([roof(.24,v),roof(.61,v)]);
           }
         }
+      }
+    }
+    // Separate world distances let cars travel across block boundaries.
+    for (const direction of [-1, 1]) {
+      const distance = this.distance * (1 + direction * .58) + direction * 69;
+      const trafficBlock = Math.floor(distance / 240);
+      for (let row = -3; row <= 2; row++) {
+        const y = row * 240 + distance - trafficBlock * 240;
+        const road = (this.distance - y) / 96;
+        const cell = Math.ceil(road);
+        const along = cell - road;
+        const start = 28 * Math.sin(cell * .42);
+        const end = 28 * Math.sin((cell-1) * .42);
+        const x = start + (end-start)*along + direction*19;
+        const truck = (trafficBlock-row) % 3 === 0;
+        const rear = truck ? -17 : -10;
+        const corner = (u: number, v: number, h = 2) => project(x+u, y+direction*v, h);
+        g.lineStyle(1, truck ? 0x91a8bd : 0x79b5b0, .72);
+        path([corner(-4,rear),corner(4,rear),corner(4,6),corner(2,9),corner(-3,9),corner(-4,6),corner(-4,rear)]);
+        path([corner(-3,2,5),corner(3,2,5),corner(2,5,4),corner(-2,5,4),corner(-3,2,5)]);
+        g.lineStyle(1, 0xe1cf99, .85);
+        for (const lamp of [-3,2]) path([corner(lamp,7),corner(lamp+1,7)]);
       }
     }
   }

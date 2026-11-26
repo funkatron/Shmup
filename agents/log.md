@@ -360,3 +360,17 @@ Animated the dock trolley and hoist, rail carts and reactor spokes from simulati
 
 - [x] Production build, TypeScript, full-route geometry simulation and separate ground/overhead drawing checks.
 - [ ] Verify the underpass illusion during combat on iPad.
+
+## 2026-11-26 · District transition passages
+
+Added eleven seconds of world-space transition centered at each district border. Parallel conduits follow the avenue through a gradient of neighboring facade colors. Local landmark brightness recedes toward the center of the passage, including the overhead girder backing.
+
+- [x] TypeScript, production build, full route and boss-practice geometry checks.
+- [ ] Judge the transition at flight speed on iPad.
+
+## 2026-11-26 · Street life
+
+Added articulated walkers on the outer pavements and two lanes of independently moving cars and trucks following the curved avenue. Muted bodywork and short headlights keep civilian traffic distinct from projectile trails.
+
+- [x] TypeScript, production build and full-route projection checks with street traffic.
+- [ ] Physical iPad scale and legibility during combat.
