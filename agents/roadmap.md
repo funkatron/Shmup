@@ -41,12 +41,7 @@ Exit: the version, the log, and the running build agree.
 
 ## Phase 4 · Tests that run on push
 
-`npm test` passes locally and does not run on a push. `.github/workflows/preview-branch.yml` only echoes.
-
-- Run `npm test` and `tsc --noEmit` on the push that requests the playtest.
-- Add scene checks for two behaviors that are still untested: a patrol Warden increments the Wardens stat when its 10 HP reaches 0, and a reserve banks only when cannon, missiles, and four drones are all full.
-
-Exit: a red test fails the playtest signal, and those two behaviors fail a test if they regress.
+Done on `4ba31d2`. A push to `dev-preview` runs `npm test` and `tsc --noEmit` before it asks Pages to build. `collectChip` banks a reserve only when cannon, missiles, and four drones are full. `strikePatrol` counts a Warden only when that hit finishes the hull. A red test fails the playtest signal.
 
 ## Phase 5 · City cost, only with numbers from phase 2
 

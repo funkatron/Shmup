@@ -414,8 +414,9 @@ Combat still substeps in slices of at most 50ms. `City.draw` runs once for the s
 
 A push to `dev-preview` now runs `npm test` and `tsc --noEmit` before it asks Pages to build. The playtest workflow still publishes only after that job succeeds. Collecting a chip banks a reserve only when cannon, missiles, and four drones are already full. A patrol Warden is counted only when the hit that finishes its hull lands. A plain frigate is not.
 
-- [x] Vitest covers the reserve rule and the patrol strike. `tsc --noEmit` passed locally.
-- [ ] The GitHub job on this push is the first remote run. iPad playtest is still open.
+- [x] Vitest covers the reserve rule and the patrol strike. `tsc --noEmit` passed locally. Twelve tests.
+- [x] GitHub run [45904490567](https://github.com/funkatron/Shmup/actions/runs/45904490567) passed `npm test` and `tsc --noEmit`, then [45904524224](https://github.com/funkatron/Shmup/actions/runs/45904524224) published the playtest. Commit on screen: `4ba31d2`.
+- [ ] iPad Safari with the Lite 2 is still open.
 
 ## 2026-11-26 · dev-preview
 
