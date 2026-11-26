@@ -93,3 +93,5 @@ Watch the outer pavements for walking pairs. Cars and longer delivery trucks tra
 | 100 s onward | Super Warden | Twin emitters fire aimed fans. Below two-thirds hull the boss alternates fans and curtains. The last third brings ten-shot fans and faster volleys. |
 
 The rotating crown surrounds a 192-HP hull. Damage cracks persist at quarter-hull intervals. Defeat the boss to bank 10,000 points and see the final score. **Fly again** starts a fresh run.
+
+Patrol Wardens enter around 0:24, 0:54 and 1:24. Each has 10 HP and flashes pale on impact. The Super Warden is 30% larger and growls again as its armor breaks.

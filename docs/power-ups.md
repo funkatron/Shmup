@@ -15,3 +15,5 @@ The first green chip equips one hollow vector wing pod. The pod adds an offset b
 The second chip equips the left pod and immediately tips both pods outward by 12°. Chip three adds two homing missiles to the spread. Each later chip adds one missile per pod, giving four missiles at chip four and six at chip five. Each extra pair opens the outer launch angle by 7° up to 75°. Missiles coast outward for 0.28 seconds before homing, accelerate from 145 to 480 logical pixels per second and leave a half-second mint trail. Each volley shares one launch sound and the existing 0.84-second cooldown.
 
 During a crossing wave, try clearing a scout with an outside lane while keeping the center bolt trained on the carrier. On iPad, check whether the wider gaps still leave the incoming magenta round easy to track.
+
+Offensive drones share a lock when only one opponent is visible and spread across targets when more appear. Defensive drones continue to intercept separate projectiles. Drone targeting scans on alternate gameplay updates. A short rising chirp marks a new lock, with simultaneous locks sounding together.

@@ -8,6 +8,8 @@ import { prepareTraces, beam } from "./beam";
 import { CombatAudio, fragments, type Hull } from "./impact";
 
 declare const __FLIGHT_BUILD__: { version: string; commit: string; builtAt: string };
+const missileSpeedScale = 0.7;
+const superScale = 1.3;
 const wardenMaxHp = 192;
 const wardenStages = [
   { texture: "warden", cue: null },
@@ -51,6 +53,8 @@ class FlightScene extends Phaser.Scene {
   private cannonLevel = 1;
   private missileLevel = 0;
   private actors: Phaser.GameObjects.Image[] = [];
+  private scanDrones = false;
+  private lockCuePlayed = false;
   private droneLocks = new Map<Phaser.GameObjects.Image, Phaser.GameObjects.Image>();
   private drones: (Phaser.GameObjects.Image & { hp: number; contacts: Set<Phaser.GameObjects.Image> })[] = [];
   private reserves = 0;
@@ -74,6 +78,8 @@ class FlightScene extends Phaser.Scene {
   private chip!: Phaser.GameObjects.Image;
   private boss!: Phaser.GameObjects.Image;
   private bossMeter!: Phaser.GameObjects.Graphics;
+  private patrolHp = 0;
+  private flashes = new Map<Phaser.GameObjects.Image, number>();
   private bossHp = 0;
   private bossAge = 0;
   private nextFan = 0;
@@ -151,10 +157,13 @@ class FlightScene extends Phaser.Scene {
     this.ship.setScale(this.ship.scaleX * 1.3);
     this.missiles.clear();
     this.lockColors.clear();
+    this.flashes.clear();
+    this.patrolHp = 0;
     this.lockOverlay = this.add.graphics().setDepth(0.5);
     this.missileCooldown = 0;
     this.cannonLevel = 1;
     this.missileLevel = 0;
+    this.scanDrones = false;
     this.drones = [];
     this.droneLocks.clear();
     this.reserves = 0;
@@ -201,7 +210,15 @@ class FlightScene extends Phaser.Scene {
     if (message !== this.status.textContent) this.status.textContent = message;
     if (this.paused) return;
 
+    this.lockCuePlayed = false;
     const seconds = Math.min(delta, 50) / 1000;
+    for (const [actor, remaining] of this.flashes) {
+      if (remaining > seconds) this.flashes.set(actor, remaining - seconds);
+      else {
+        actor.setTexture(actor.texture.key.replace(/-flash$/, ""));
+        this.flashes.delete(actor);
+      }
+    }
     this.city?.draw(seconds, this.ship.x, route.length * 10 - this.untilBoss + (this.arrival ? this.introTime - 2.6 : 0));
     this.farScroll = (this.farScroll + 18 * seconds) % 192;
     this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
@@ -248,7 +265,12 @@ class FlightScene extends Phaser.Scene {
       passTime = this.carrierTime % 5;
       if (passTime < previousTime) this.target.setVisible(true);
       const fieldX = (x: number) => this.mirrored ? 360 - x : x;
-      if (lastWaveTime < 4 && this.carrierTime >= 4) this.frigate.setVisible(true);
+      if (lastWaveTime < 4 && this.carrierTime >= 4) {
+        this.patrolHp = [2,5,8].includes(measure) ? 10 : 0;
+        this.flashes.delete(this.frigate);
+        this.frigate.setTexture(this.patrolHp ? "warden" : "frigate").setScale(this.patrolHp ? .2 : 1/3).setVisible(true);
+        if (this.patrolHp) this.combatAudio.cue("wardenGrowl");
+      }
       this.frigate.x = fieldX(-20 + (this.carrierTime - 4) * 88);
       if (this.carrierTime >= 8.6) this.frigate.setVisible(false);
       if (this.frigate.visible && lastWaveTime < 6 && this.carrierTime >= 6) this.fireFrigateMissiles();
@@ -270,7 +292,7 @@ class FlightScene extends Phaser.Scene {
             this.combatAudio.projectile("incoming");
             for (let lane = 0; lane < 9; lane++) {
               if (lane === gap || lane === gap + 1) continue;
-              this.enemyShots.push({ sprite: beam(this, 20 + lane * 40, 14, "enemy-missile"), vx: 0, vy: 168 });
+              this.enemyShots.push({ sprite: beam(this, 20 + lane * 40, 14, "enemy-missile"), vx: 0, vy: 168 * missileSpeedScale });
             }
           }
         }
@@ -337,14 +359,16 @@ class FlightScene extends Phaser.Scene {
         missile.age += seconds;
         if (missile.age >= 0.28) {
           if (!missile.target?.visible || missile.target.y >= shot.y || missile.target.x < 0 || missile.target.x > 360) {
-            missile.target = this.frontTarget(shot.x, shot.y);
+            const next = this.frontTarget(shot.x, shot.y);
+            if (next && next !== missile.target) this.signalLock();
+            missile.target = next;
           }
           const target = missile.target;
           const heading = target ? Math.atan2(target.x - shot.x, shot.y - target.y) : 0;
           shot.rotation += Phaser.Math.Clamp(heading - shot.rotation, -4.5 * seconds, 4.5 * seconds);
         }
       }
-      const speed = missile ? Math.min(480, 145 + 440 * missile.age) : 420;
+      const speed = missile ? missileSpeedScale * Math.min(480, 145 + 440 * missile.age) : 420;
       const travel = speed * seconds;
       shot.x += Math.sin(shot.rotation) * travel;
       shot.y -= Math.cos(shot.rotation) * travel;
@@ -360,7 +384,7 @@ class FlightScene extends Phaser.Scene {
       }
       const hit = this.firstHit(previousX, previousY, shot.x - previousX, shot.y - previousY);
       if (hit) this.damageEnemy(hit.actor, missile ? 3 : 1);
-      if (hit || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2)) {
+      if (hit || shot.y < -5 || shot.x < -12 || shot.x > 372 || (missile && missile.age > 2 / missileSpeedScale)) {
         missile?.trail.destroy();
         this.missiles.delete(shot);
         shot.destroy();
@@ -511,7 +535,8 @@ class FlightScene extends Phaser.Scene {
   }
 
   private halfWidth(actor: Phaser.GameObjects.Image) {
-    if (actor === this.boss) return 58;
+    if (actor === this.boss) return 58 * superScale;
+    if (actor === this.frigate && this.patrolHp) return 28;
     if (actor === this.carrier || actor === this.frigate) return 16;
     return actor === this.target ? 12.5 : 9;
   }
@@ -528,7 +553,7 @@ class FlightScene extends Phaser.Scene {
         leave = Math.min(leave, Math.max(a, b));
         return enter <= leave;
       };
-      if (clip(actor.x - x, dx, this.halfWidth(actor)) && clip(actor.y - y, dy, 12)
+      if (clip(actor.x - x, dx, this.halfWidth(actor)) && clip(actor.y - y, dy, actor === this.boss ? 12 * superScale : 12)
           && (!nearest || enter < nearest.fraction)) nearest = { actor, fraction: enter };
     }
     return nearest;
@@ -547,11 +572,12 @@ class FlightScene extends Phaser.Scene {
       if (this.bossHp > 0) {
         const stage = Math.floor(4 * (1 - this.bossHp / wardenMaxHp));
         const { texture, cue } = wardenStages[stage];
-        if (this.boss.texture.key !== texture) {
+        if (this.boss.texture.key.replace(/-flash$/, "") !== texture) {
           this.boss.setTexture(texture);
           if (cue) this.combatAudio.cue(cue);
+          this.combatAudio.cue("superGrowl");
         }
-        this.boss.setTint(0xffdddd);
+        this.flashHull(this.boss, texture);
       }
       if (this.bossHp <= 0) {
         this.addScore(10000);
@@ -582,6 +608,13 @@ class FlightScene extends Phaser.Scene {
       this.chip.setPosition(Phaser.Math.Clamp(this.carrier.x, 8, 352), this.carrier.y).setVisible(true);
       this.chipDrift = this.chip.x < 180 ? 20 : -20;
     } else if (actor === this.frigate) {
+      if (this.patrolHp > 0) {
+        this.patrolHp = Math.max(0, this.patrolHp - damage);
+        if (this.patrolHp) {
+          this.flashHull(actor, this.patrolHp <= 5 ? "warden-cracked" : "warden");
+          return;
+        }
+      }
       this.addScore(400);
       this.frigate.setVisible(false);
       this.explode(this.frigate.x, this.frigate.y, "raider");
@@ -590,6 +623,11 @@ class FlightScene extends Phaser.Scene {
       this.target.setVisible(false);
       this.explode(this.target.x, this.target.y, "raider");
     }
+  }
+
+  private flashHull(actor: Phaser.GameObjects.Image, hull: string) {
+    actor.setTexture(hull + "-flash");
+    this.flashes.set(actor, .085);
   }
 
   private fireBeam(drone: Phaser.GameObjects.Image, target: Phaser.GameObjects.Image) {
@@ -642,11 +680,13 @@ class FlightScene extends Phaser.Scene {
     const available = new Set(mode === "Defensive"
       ? this.enemyShots.map(shot => shot.sprite).filter(a => a.visible && a.x >= 0 && a.x <= 360 && a.y >= 0 && a.y <= 480)
       : enemies);
+    const shared = mode !== "Defensive" && enemies.length === 1;
+    this.scanDrones = !this.scanDrones;
     for (const [drone, target] of this.droneLocks) {
-      if (!available.delete(target)) this.droneLocks.delete(drone);
+      if (!(shared ? available.has(target) : available.delete(target))) this.droneLocks.delete(drone);
     }
     for (const drone of this.drones) {
-      if (this.droneLocks.has(drone)) continue;
+      if (!this.scanDrones || this.droneLocks.has(drone)) continue;
       let best: Phaser.GameObjects.Image | undefined;
       let range = Infinity;
       for (const target of available) {
@@ -656,7 +696,8 @@ class FlightScene extends Phaser.Scene {
       }
       if (best) {
         this.droneLocks.set(drone, best);
-        available.delete(best);
+        this.signalLock();
+        if (!shared) available.delete(best);
       }
     }
     for (let i = count - 1; i >= 0; i--) {
@@ -705,7 +746,7 @@ class FlightScene extends Phaser.Scene {
       const x = this.frigate.x + side * 11;
       const heading = Math.atan2(this.ship.y - y, this.ship.x - x);
       const sprite = beam(this, x, y, "enemy-missile").setRotation(heading + Math.PI / 2);
-      this.enemyShots.push({ sprite, vx: 155 * Math.cos(heading), vy: 155 * Math.sin(heading) });
+      this.enemyShots.push({ sprite, vx: 155 * missileSpeedScale * Math.cos(heading), vy: 155 * missileSpeedScale * Math.sin(heading) });
     }
   }
 
@@ -718,8 +759,10 @@ class FlightScene extends Phaser.Scene {
         const angle = side * (45 + laneSpacing * (lane - 1)) * Math.PI / 180;
         const shot = beam(this, pod.x, pod.y - 6, "missile").setRotation(angle);
         this.shots.push(shot);
+        const target = this.frontTarget(shot.x, shot.y);
+        if (target) this.signalLock();
         this.missiles.set(shot, {
-          age: 0, target: this.frontTarget(shot.x, shot.y), trail: this.add.graphics().setDepth(-1),
+          age: 0, target, trail: this.add.graphics().setDepth(-1),
           points: [{ x: shot.x, y: shot.y, time: 0 }],
         });
       }
@@ -836,7 +879,8 @@ class FlightScene extends Phaser.Scene {
 
   private updateBoss(seconds: number) {
     if (!this.boss.visible) {
-      this.boss.setScale(0.45).setTexture("warden").setPosition(180, -30).setVisible(true);
+      this.combatAudio.cue("superGrowl");
+      this.boss.setScale(0.45 * superScale).setTexture("warden").setPosition(180, -30).setVisible(true);
       this.frigate.setVisible(false);
       this.bossHp = wardenMaxHp;
       this.bossAge = 0;
@@ -852,15 +896,15 @@ class FlightScene extends Phaser.Scene {
     this.boss.x = 180 + 99 * Math.sin(this.bossAge * 0.82);
     const g = this.bossMeter.clear();
     for (let i = 0; i < Math.ceil(12 * this.bossHp / wardenMaxHp); i++) {
-      g.lineStyle(2, 0xff996e, 0.9).lineBetween(this.boss.x - 29 + i*5, this.boss.y - 28,
-        this.boss.x - 26 + i*5, this.boss.y - 28);
+      g.lineStyle(2, 0xff996e, 0.9).lineBetween(this.boss.x - 29 + i*5, this.boss.y - 28 * superScale,
+        this.boss.x - 26 + i*5, this.boss.y - 28 * superScale);
     }
     const phase = this.bossHp > 128 ? 0 : this.bossHp > 64 ? 1 : 2;
     // Rotating crown and twin emitter pods sit outside the damage-stage hull.
     for (const side of [-1, 1]) {
-      const x = this.boss.x + side * 55, y = this.boss.y + 8;
+      const x = this.boss.x + side * 55 * superScale, y = this.boss.y + 8 * superScale;
       g.lineStyle(2, 0xff8559, 0.95).strokeCircle(x, y, 7);
-      g.lineBetween(x, y - 7, this.boss.x + side * 36, y - 23);
+      g.lineBetween(x, y - 7, this.boss.x + side * 36 * superScale, y - 23 * superScale);
     }
     g.lineStyle(1, 0xe765ff, 0.8);
     for (let i = 0; i < 8; i++) {
@@ -881,8 +925,8 @@ class FlightScene extends Phaser.Scene {
       const side = i % 2 ? 1 : -1;
       const angle = curtain ? Math.PI / 2 : this.aim + (i - (count - 1) / 2) * 0.19;
       const dx = Math.cos(angle), dy = Math.sin(angle);
-      const x = curtain ? 20 + 40*i : this.boss.x + side * 55;
-      const y = curtain ? 8 : this.boss.y + 8;
+      const x = curtain ? 20 + 40*i : this.boss.x + side * 55 * superScale;
+      const y = curtain ? 8 : this.boss.y + 8 * superScale;
       g.lineStyle(1, 0xff528c, 0.85).lineBetween(x + 12*dx, y + 12*dy, x + 30*dx, y + 30*dy);
       if (this.bossAge >= this.nextFan) {
         this.enemyShots.push({sprite: beam(this, x, y, "incoming"), vx: (155+phase*20)*dx, vy: (155+phase*20)*dy});
@@ -896,6 +940,11 @@ class FlightScene extends Phaser.Scene {
     }
   }
 
+  private signalLock() {
+    if (!this.lockCuePlayed) this.combatAudio.cue("lock");
+    this.lockCuePlayed = true;
+  }
+
   private frontTarget(x: number, y: number) {
     const locks = new Map<Phaser.GameObjects.Image, number>();
     for (const { target } of this.missiles.values()) {
@@ -904,8 +953,9 @@ class FlightScene extends Phaser.Scene {
     let fewestLocks = Infinity;
     let closest: Phaser.GameObjects.Image | undefined;
     let distance = Infinity;
-    for (const actor of [this.boss, this.frigate, this.carrier, this.target, ...this.scouts.map(s => s.sprite)]) {
-      if (!actor.visible || actor.y >= y || actor.x < 0 || actor.x > 360) continue;
+    const visible = this.actors.filter(a => a.visible && a.x >= 0 && a.x <= 360 && a.y >= 0 && a.y <= 480);
+    for (const actor of visible) {
+      if (visible.length > 1 && actor.y >= y) continue;
       const range = Math.hypot(actor.x - x, actor.y - y);
       const count = locks.get(actor) ?? 0;
       if (count < fewestLocks || (count === fewestLocks && range < distance)) {
@@ -946,11 +996,11 @@ class FlightScene extends Phaser.Scene {
         this.lockColors.delete(target);
         continue;
       }
-      const radius = target === this.boss ? 46 : target === this.carrier || target === this.frigate ? 20 : 14;
+      const radius = target === this.boss ? 46 * superScale : target === this.carrier || target === this.frigate ? 20 : 14;
       this.lockOverlay.lineStyle(1, color, 0.9);
       for (const side of [-1, 1]) {
         for (const end of [-1, 1]) {
-          const x = target.x + side * radius, y = target.y + end * (target === this.boss ? 24 : 11);
+          const x = target.x + side * radius, y = target.y + end * (target === this.boss ? 24 * superScale : 11);
           this.lockOverlay.lineBetween(x, y, x - side * 4, y);
           this.lockOverlay.lineBetween(x, y, x, y - end * 4);
         }

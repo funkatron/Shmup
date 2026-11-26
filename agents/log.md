@@ -374,3 +374,17 @@ Added articulated walkers on the outer pavements and two lanes of independently 
 
 - [x] TypeScript, production build and full-route projection checks with street traffic.
 - [ ] Physical iPad scale and legibility during combat.
+
+## 2026-11-26 · Drone and missile targeting
+
+Drone acquisition scans run every second gameplay update. All offensive drones can share one visible enemy, and homing missiles may turn toward the sole opponent even after passing it. Missile speeds scale by 0.7, including hostile missiles. Concurrent new locks share one short two-note cue.
+
+- [x] TypeScript and production build. Simulated a lone enemy, a second enemy entering and leaving, half-rate drone reacquisition and grouped audio events.
+- [ ] Flight feel and cue audibility on iPad.
+
+## 2026-11-26 · Warden patrols and damage feedback
+
+Three district patrols use a 10-HP Warden in the missile-frigate slot. Both Warden classes flash a bright trace of the current hull for 85 ms after surviving damage. The Super Warden is 30% larger with scaled hit bounds and emitters. Synthesized throat modulation gives patrols a short growl and the boss a longer, lower roar.
+
+- [x] TypeScript and production build. Exercised patrol hits, damage-stage flash textures, boss hit width and both audio buffers at 48 kHz.
+- [ ] Check growl balance and hull flashes on iPad.

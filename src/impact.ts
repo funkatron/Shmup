@@ -176,6 +176,7 @@ function synthProjectile(context: AudioContext, kind: Projectile) {
 // Contours adapted from the numbered sound test. One buffer per cue and
 // sample rate, generated on first use through the existing sound switch.
 const cueProfiles = {
+  lock: { start: 880, end: 1320, seconds: 0.095, gain: 0.13, steps: 2, grit: 0 },
   pickup: { start: 480, end: 960, seconds: 0.34, gain: 0.14, steps: 4, grit: 0 },
   charge: { start: 190, end: 820, seconds: 0.61, gain: 0.15, steps: 0, grit: 0.13 },
   wingCrack: { start: 740, end: 210, seconds: 0.19, gain: 0.28, steps: 0, grit: 0.73 },
@@ -184,9 +185,28 @@ const cueProfiles = {
   playerHit: { start: 240, end: 95, seconds: 0.17, gain: 0.24, steps: 0, grit: 0.58 },
 } as const;
 
-type Cue = keyof typeof cueProfiles;
+type Growl = "wardenGrowl" | "superGrowl";
+type Cue = keyof typeof cueProfiles | Growl;
+
+function growl(context: AudioContext, deep: boolean) {
+  const rate = context.sampleRate;
+  const duration = deep ? 1.18 : .62;
+  const buffer = context.createBuffer(1, Math.ceil(rate * duration), rate);
+  const samples = buffer.getChannelData(0);
+  let phase = 0;
+  for (let i = 0; i < samples.length; i++) {
+    const t = i / rate, u = t / duration;
+    const pitch = (deep ? 62 : 102) * (1.16 - .45*u + .06*Math.sin(39*t));
+    phase += 2*Math.PI*pitch/rate;
+    const throat = Math.sin(phase + 1.8*Math.sin(phase*.52)) + .55*Math.sin(3*phase) + .29*Math.sin(5*phase);
+    const rasp = .66 + .34*Math.sin(t*(deep ? 108 : 149));
+    samples[i] = .25*Math.tanh(1.6*throat)*rasp*Math.min(1,t/.045)*(1-u)**.8;
+  }
+  return buffer;
+}
 
 function synthCue(context: AudioContext, kind: Cue) {
+  if (kind === "wardenGrowl" || kind === "superGrowl") return growl(context, kind === "superGrowl");
   const { start, end, seconds, gain, steps, grit } = cueProfiles[kind];
   const rate = context.sampleRate;
   const buffer = context.createBuffer(1, Math.ceil(seconds * rate), rate);

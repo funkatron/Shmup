@@ -32,6 +32,9 @@ function traceTexture(scene: Phaser.Scene, key: string, w: number, h: number,
     ctx.stroke();
   }
   texture.refresh();
+  if (key.startsWith("warden") && !key.endsWith("-flash")) {
+    traceTexture(scene, key + "-flash", w, h, "#fff9dc", 1, traces.concat(accent?.paths ?? []));
+  }
 }
 
 export function prepareTraces(scene: Phaser.Scene) {
