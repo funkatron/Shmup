@@ -81,3 +81,11 @@ export function simSlices(deltaMs: number, remainderMs = 0): { slices: number[];
   }
   return { slices, remainderMs: pending };
 }
+
+// One city draw covers every slice this frame. The slices still substep combat.
+export function frameStep(deltaMs: number, remainderMs = 0): { slices: number[]; remainderMs: number; cityMs: number } {
+  const stepped = simSlices(deltaMs, remainderMs);
+  let cityMs = 0;
+  for (const slice of stepped.slices) cityMs += slice;
+  return { slices: stepped.slices, remainderMs: stepped.remainderMs, cityMs };
+}

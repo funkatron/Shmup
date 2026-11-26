@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   cannonRestSteps,
   cityRouteTime,
+  frameStep,
   hullHalfWidth,
   loadoutComplete,
   nextChip,
@@ -100,5 +101,21 @@ describe("simSlices", () => {
     const hitch = simSlices(200);
     expect(hitch).toEqual({ slices: [50, 50, 50], remainderMs: 50 });
     expect(simSlices(10, hitch.remainderMs)).toEqual({ slices: [50, 10], remainderMs: 0 });
+  });
+});
+
+describe("frameStep", () => {
+  it("advances a 100ms hitch in slices and draws the city once for that time", () => {
+    const step = frameStep(100);
+    expect(step.slices).toEqual([50, 50]);
+    expect(step.remainderMs).toBe(0);
+    expect(step.cityMs).toBe(100);
+  });
+
+  it("draws only the simulated time when a hitch is capped at three slices", () => {
+    const step = frameStep(200);
+    expect(step.slices).toHaveLength(3);
+    expect(step.cityMs).toBe(150);
+    expect(step.remainderMs).toBe(50);
   });
 });
