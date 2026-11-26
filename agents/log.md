@@ -339,3 +339,10 @@ Designed ten carrier passes across four districts, with authored scout paths, ch
 
 - [x] TypeScript and production build. Simulated the complete timeline, all district transitions, all three boss phases, the 10,000-point award and terminal clear state.
 - [ ] Physical iPad readability, frame pacing and difficulty with the SN30 Pro.
+
+## 2026-11-25 · Glass Meridian storyboard art · PR #1
+
+Translated Edward’s neon storyboard into scrolling world geometry. Alternating quays carry cranes and moored ferries, rails cross in both directions, reactors use nested rings, and the gates carry a crown. Lower-intensity terrain overlays leave the restored landmarks visible. The Warden has swept armored wings, a segmented magenta core and four hull textures.
+
+- [x] TypeScript, production build and a 101-second geometry simulation through all districts with lateral camera movement.
+- [ ] Compare shot contrast over the reactor and check frame pacing on physical iPad.

@@ -82,10 +82,10 @@ Fly over a procedurally laid-out neon district. Rooftops and service streets pas
 
 | Flight time | District | What to watch |
 |---|---|---|
-| 0–20 s | Neon Port | Two carrier passes among crossing scout wings. Use the opening to build your cannon and find missiles. |
+| 0–20 s | Neon Port | Magenta dock cranes and moored ferries pass beneath the first two carrier waves. Use the opening to build your cannon and find missiles. |
 | 20–50 s | Switchyard | Crossed rails mark the first missile curtains. Amber-pink chevrons announce occupied lanes 850 ms before launch. Fly through the two unmarked lanes. |
-| 50–80 s | Arc Reactor | Coil roofs pass beneath double-arc scout runs. Three curtains per pass move the opening across the screen. |
-| 80–100 s | Crown Gate | High trusses, mirrored flights and the last carriers. Ships break away for the final three seconds. |
+| 50–80 s | Arc Reactor | Concentric cyan reactor rings pass beneath double-arc scout runs. Three curtains per pass move the opening across the screen. |
+| 80–100 s | Crown Gate | Gold crowns on blue trusses, mirrored flights and the last carriers. Ships break away for the final three seconds. |
 | 100 s onward | Super Warden | Twin emitters fire aimed fans. Below two-thirds hull the boss alternates fans and curtains. The last third brings ten-shot fans and faster volleys. |
 
 The rotating crown surrounds a 192-HP hull. Damage cracks persist at quarter-hull intervals. Defeat the boss to bank 10,000 points and see the final score. **Fly again** starts a fresh run.

@@ -4,7 +4,7 @@ type Trace = number[];
 
 // Paths describe the beam while lit. Starting a new path blanks the connecting move.
 function traceTexture(scene: Phaser.Scene, key: string, w: number, h: number,
-  color: string, intensity: number, traces: Trace[]) {
+  color: string, intensity: number, traces: Trace[], accent?: { color: string, paths: Trace[] }) {
   const density = 3;
   const texture = scene.textures.createCanvas(key, w * density, h * density);
   if (!texture) return;
@@ -14,14 +14,16 @@ function traceTexture(scene: Phaser.Scene, key: string, w: number, h: number,
   ctx.lineCap = "round";
   ctx.strokeStyle = color;
   ctx.globalCompositeOperation = "lighter";
-  for (const path of traces) {
+  for (const path of traces.concat(accent?.paths ?? [])) {
+    const phosphor = accent?.paths.includes(path) ? accent.color : color;
+    ctx.strokeStyle = phosphor;
     ctx.beginPath();
     ctx.moveTo(path[0], path[1]);
     for (let i = 2; i < path.length; i += 2) ctx.lineTo(path[i], path[i + 1]);
     // Bake the soft phosphor footprint once. Brighter traces get a wider halo.
     ctx.globalAlpha = intensity * 0.28;
     ctx.lineWidth = 2.4;
-    ctx.shadowColor = color;
+    ctx.shadowColor = phosphor;
     ctx.shadowBlur = 2.6 * density * intensity;
     ctx.stroke();
     ctx.shadowBlur = 0;
@@ -34,22 +36,22 @@ function traceTexture(scene: Phaser.Scene, key: string, w: number, h: number,
 
 export function prepareTraces(scene: Phaser.Scene) {
   const wardenHull = [
-    [3,14,22,9,32,15,42,6,62,6,72,15,82,9,101,14,91,35,76,40,68,32,60,40,52,51,44,40,36,32,28,40,13,35,3,14],
-    [5,15,20,20,27,35,15,31,5,15], [99,15,84,20,77,35,89,31,99,15],
-    [31,19,43,11,61,11,73,19,66,28,58,23,46,23,38,28,31,19],
-    [43,31,52,23,61,31,52,43,43,31], [48,31,52,27,56,31,52,37,48,31],
-    [18,14,24,17], [80,17,86,14],
+    [3,8,23,13,33,22,41,13,46,16,52,4,58,16,63,13,71,22,81,13,101,8,91,22,98,33,79,40,68,34,60,39,52,53,44,39,36,34,25,40,6,33,13,22,3,8],
+    [4,9,25,19,33,27,25,37,14,29,24,27,13,22,4,9],
+    [100,9,79,19,71,27,79,37,90,29,80,27,91,22,100,9],
+    [33,22,42,17,46,23,43,35,36,31,33,22],
+    [71,22,62,17,58,23,61,35,68,31,71,22],
+    [45,23,52,10,59,23,57,38,52,47,47,38,45,23],
   ];
-  traceTexture(scene, "warden", 104, 58, "#ff8469", 1, wardenHull);
-  // Replace intact panel loops with open, buckled traces as each plate fails.
+  const core = { color: "#ff5aaf", paths: [[49,24,55,24],[49,28,55,28],[50,32,54,32],[51,36,53,36]] };
+  traceTexture(scene, "warden", 104, 58, "#c79bff", 1, wardenHull, core);
   const damaged = [...wardenHull];
-  damaged[1] = [5,15,17,19,13,24,22,23,18,29,27,35];
-  traceTexture(scene, "warden-cracked", 104, 58, "#ff9867", 1, damaged);
-  damaged[2] = [99,15,89,20,93,24,84,23,88,30,77,35];
-  traceTexture(scene, "warden-breached", 104, 58, "#ff8060", 1, damaged);
-  damaged[3] = [31,19,43,11,49,12,46,18,53,16,50,23,58,20,55,27];
-  damaged[4] = [43,31,49,27,46,34,53,32,50,40];
-  traceTexture(scene, "warden-critical", 104, 58, "#ff6647", 1, damaged);
+  damaged[1] = [4,9,25,19,20,23,26,22,19,29,25,37];
+  traceTexture(scene, "warden-cracked", 104, 58, "#d29aff", 1, damaged, core);
+  damaged[2] = [100,9,79,19,85,23,78,22,85,29,79,37];
+  traceTexture(scene, "warden-breached", 104, 58, "#f08dc7", 1, damaged, core);
+  damaged[5] = [45,23,52,10,59,23,54,29,59,30,52,39];
+  traceTexture(scene, "warden-critical", 104, 58, "#ff887a", 1, damaged, core);
   traceTexture(scene, "fighter", 32, 32, "#62fff4", 1, [
     [16,5,20,15,26,23,20,21,17,18,15,18,12,21,6,23,12,15,16,5],
     [12,15,11,20], [20,15,21,20], [16,10,18,16,14,16,16,10],

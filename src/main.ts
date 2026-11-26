@@ -104,7 +104,7 @@ class FlightScene extends Phaser.Scene {
     this.city = parallax ? new City(this) : undefined;
     this.farScroll = 0;
     this.farBanks = parallax ? Array.from({ length: 4 }, (_, i) =>
-      beam(this, 180, i * 192 - 96, "folds").setDepth(-3)) : [];
+      beam(this, 180, i * 192 - 96, "folds").setAlpha(0.40).setDepth(-3)) : [];
     const flight = (count: number, fromRight: boolean, start: number, spacing: number, altitude = 0) =>
       Array.from({ length: count }, (_, i) => ({
         entry: start + spacing * i, fromRight, altitude, leader: i === 0, down: false,
@@ -115,15 +115,15 @@ class FlightScene extends Phaser.Scene {
       ...flight(6, false, 5.10, 0.20, -58), ...flight(5, true, 6.45, 0.22, -52),
     ];
     this.marks = Array.from({ length: 5 }, (_, i) =>
-      beam(this, 180, i * 128 - 64, "canyon").setDepth(-2));
-    this.bridge = beam(this, 180, this.marks[1].y, "bridge").setDepth(-2);
+      beam(this, 180, i * 128 - 64, "canyon").setAlpha(parallax ? 0.28 : 1).setDepth(-2));
+    this.bridge = beam(this, 180, this.marks[1].y, "bridge").setAlpha(parallax ? 0.45 : 1).setDepth(-2);
     this.bridge.setVisible(new URLSearchParams(location.search).get("bridge") !== "off");
     this.shots = [];
     this.enemyShots = [];
     this.mirrored = false;
     this.ledgeScroll = 0;
     this.ledges = parallax ? Array.from({ length: 4 }, (_, i) =>
-      beam(this, 180, i * 192 - 96, "ledges").setDepth(-1.5)) : [];
+      beam(this, 180, i * 192 - 96, "ledges").setAlpha(0.55).setDepth(-1.5)) : [];
     const detachAudio = this.combatAudio.attach(document.querySelector<HTMLButtonElement>("#sound")!);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, detachAudio);
     this.stats = newFlightStats();

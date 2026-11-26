@@ -32,20 +32,47 @@ export class City {
       const id = this.block - row;
       const avenue = 28 * Math.sin(id * 0.42);
       const next = 28 * Math.sin((id - 1) * 0.42);
-      if (district >= 2) {
-        g.lineStyle(1, district >= 8 ? 0xcb8562 : 0x658aac, 0.58);
-        if (district < 5) {
-          for (const offset of [-9, 9]) path([project(-85+offset,y,3), project(85+offset,y+96,3)]);
-        } else if (district < 8) {
-          const coil = Array.from({length: 13}, (_, i) => {
-            const a = i * Math.PI / 6;
-            return project(avenue + 33*Math.cos(a), y + 46 + 32*Math.sin(a), 7);
-          });
-          path(coil);
-        } else {
-          path([project(-90,y,0), project(-90,y,40), project(-58,y+12,56),
-            project(58,y+12,56), project(90,y,40), project(90,y,0)]);
+      // Landmarks occupy alternating blocks. Project every vertex with the streets
+      // so a passing roof or crane stays anchored as the pilot banks.
+      const stroke = (color: number, vertices: number[][], glow = false) => {
+        const screen = vertices.map(([x, offset, h]) => project(x, y + offset, h));
+        if (glow) {
+          g.lineStyle(3, color, 0.10);
+          path(screen);
         }
+        g.lineStyle(1, color, 0.68);
+        path(screen);
+      };
+      const side = (id & 2) ? -1 : 1;
+      if (id % 2 === 0 && district < 2) {
+        // Quayside gantry, suspended container and a pointed ferry hull.
+        const crane = (points: number[][]) => points.map(([x,v,h]) => [x*side,v,h]);
+        stroke(0xf078e1, crane([[108,18,0],[108,18,70],[44,18,70],[108,18,51]]), true);
+        stroke(0xf078e1, crane([[50,18,70],[50,18,43],[36,18,35],[64,18,35],[64,18,24],[36,18,24],[36,18,35]]));
+        stroke(0x48c7d5, crane([[-87,4,2],[-74,24,2],[-74,75,2],[-95,75,2],[-99,24,2],[-87,4,2]]), true);
+      } else if (district >= 2 && district < 5) {
+        for (const sign of [-1,1]) {
+          for (const offset of [-4,4]) stroke(0xe7ac6e, [[sign*96+offset,0,5],[-sign*96+offset,96,5]]);
+          for (const t of [.15,.35,.65,.85]) {
+            const x = sign*96*(1-2*t);
+            stroke(0x95816d, [[x-8,t*96-2,4],[x+8,t*96+2,4]]);
+          }
+        }
+      } else if (id % 2 === 0 && district >= 5 && district < 8) {
+        for (const radius of [31,47,62]) {
+          const ring = Array.from({length: 25}, (_, k) => {
+            const a = k*Math.PI/12;
+            return [avenue+radius*Math.cos(a),48+radius*.78*Math.sin(a),12];
+          });
+          stroke(0x42cfee, ring, radius === 47);
+        }
+        for (const x of [-74,74]) stroke(0xb56ae4, [[x,0,0],[x,27,12],[x*.7,41,12]]);
+      } else if (id % 2 === 0 && district >= 8) {
+        for (const x of [-104,104]) {
+          stroke(0x62bbf3, [[x,16,0],[x,16,65],[x*.73,16,86],[-x*.73,16,86]], true);
+          stroke(0x7296d3, [[x*.89,16,0],[x*.89,16,59],[x*.72,16,74],[0,16,74]]);
+        }
+        stroke(0xffb459, [[-20,16,87],[-25,16,107],[-9,16,96],[0,16,116],[9,16,96],[25,16,107],[20,16,87],[-20,16,87]], true);
       }
       for (const side of [-1, 1]) {
         g.lineStyle(1, 0x52648b, 0.42);
