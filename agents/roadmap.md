@@ -4,10 +4,10 @@ Sequenced from the review of the local tree on 2026-11-26. Do not start a later 
 
 ## Phase 0 · Make both diffs real
 
-The game changes land on `controller-flight`. The Pages workflow change lands on `publish-triggering-commit`, opened against `main`.
+The game changes land on `dev-preview`. The Pages workflow change lands on `publish-triggering-commit`, opened against `main`.
 
-- Commit the game, tests, docs, and favicon on `controller-flight`.
-- Check the workflow edit out on a normal `main` working tree and commit it there. `cancel-in-progress` is true, and a `workflow_run` checks out `github.event.workflow_run.head_sha`. Manual dispatch still checks out `controller-flight`.
+- Commit the game, tests, docs, and favicon on `dev-preview`.
+- Check the workflow edit out on a normal `main` working tree and commit it there. `cancel-in-progress` is true, and a `workflow_run` checks out `github.event.workflow_run.head_sha`. Manual dispatch still checks out `dev-preview`.
 - Open the two pull requests. Do not merge them in this phase.
 
 Exit: both diffs are on branches a fresh clone can see, and `git worktree list` no longer holds the only copy of the workflow.

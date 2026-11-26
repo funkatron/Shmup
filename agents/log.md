@@ -401,4 +401,15 @@ The Pages workflow edit is on `publish-triggering-commit`, opened against `main`
 
 ## 2026-11-26 · Roadmap
 
-Wrote [the roadmap](roadmap.md) after a staff pass on this uncommitted tree. Phases 0–5 land the diffs, draw the city once per frame, playtest on iPad, authorize `0.1.0`, run tests on push, and tune the city only if the iPad is slow. Phases 6–9 are the later work: split `FlightScene` where a test needs a seam, rewrite the impact synth when a cue is wrong, redesign touch when the deck fails a session, and add a second stage after `0.1.0`. The next move is still phase 0. Version stays `0.0.0`.
+Wrote [the roadmap](roadmap.md) after a staff pass on this uncommitted tree. Phases 0–5 land the diffs, draw the city once per frame, playtest on iPad, authorize `0.1.0`, run tests on push, and tune the city only if the iPad is slow. Phases 6–9 are the later work: split `FlightScene` where a test needs a seam, rewrite the impact synth when a cue is wrong, redesign touch when the deck fails a session, and add a second stage after `0.1.0`. Phase 0 is on the remotes. The playtest branch is now `dev-preview`. Version stays `0.0.0`.
+
+## 2026-11-26 · One city draw per frame
+
+Combat still substeps in slices of at most 50ms. `City.draw` runs once for the sum of those slices, using the clock from before the slices so the first sample still locks Neon Port at `-2.6` and boss practice at `77.4`. The ship position is the one after the slices, so the avenue follows the fighter.
+
+- [x] Vitest, including a 100ms hitch that advances 100ms and asks for one city interval, and a 200ms hitch that draws only the 150ms that was simulated.
+- [ ] iPad frame time on a busy Neon Port pass, now that a hitch cannot redraw the city three times.
+
+## 2026-11-26 · dev-preview
+
+The playtest branch is `dev-preview`. Pushes to that name request the Pages build. The older name `controller-flight` remains on the remote until the open pull request is retargeted.
