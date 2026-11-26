@@ -116,7 +116,7 @@ class FlightScene extends Phaser.Scene {
     ];
     this.marks = Array.from({ length: 5 }, (_, i) =>
       beam(this, 180, i * 128 - 64, "canyon").setAlpha(parallax ? 0.28 : 1).setDepth(-2));
-    this.bridge = beam(this, 180, this.marks[1].y, "bridge").setAlpha(parallax ? 0.45 : 1).setDepth(-2);
+    this.bridge = beam(this, 180, this.marks[1].y, "bridge").setAlpha(parallax ? 0.6 : 1).setDepth(0.25);
     this.bridge.setVisible(new URLSearchParams(location.search).get("bridge") !== "off");
     this.shots = [];
     this.enemyShots = [];

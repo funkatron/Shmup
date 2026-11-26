@@ -353,3 +353,10 @@ Bound architecture and facade colors to world blocks. Opened the central avenue,
 
 - [x] TypeScript, production build, finite projected coordinates, mixed architecture across all three boundaries, boss-practice opening.
 - [ ] Physical iPad readability and frame pacing.
+
+## 2026-11-26 · Moving scenery and overhead spans
+
+Animated the dock trolley and hoist, rail carts and reactor spokes from simulation time. Crown Gate piers sit below the fighter while narrow beams interrupt its outline from above. Bridges also cross above the flight layer.
+
+- [x] Production build, TypeScript, full-route geometry simulation and separate ground/overhead drawing checks.
+- [ ] Verify the underpass illusion during combat on iPad.

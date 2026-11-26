@@ -80,6 +80,7 @@ Fly over a procedurally laid-out neon district. Rooftops and service streets pas
 
 [Stage storyboard](docs/glass-meridian.svg) · [Play the stage](https://funkatron.github.io/Shmup/) · [Practice the Super Warden](https://funkatron.github.io/Shmup/?encounter=boss)
 City blocks keep their landmarks as they scroll. At district boundaries, the next district enters from the top while the previous district passes beneath the fighter. [Four terrain frames](docs/meridian-overflight.svg)
+Dock cranes shuttle and lift containers, rail carts follow the diagonals, and reactor spokes rotate. Fly beneath bridges and Crown Gate trusses. The overhead structures are scenery and deal no damage.
 
 | Flight time | District | What to watch |
 |---|---|---|
