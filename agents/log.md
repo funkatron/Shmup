@@ -346,3 +346,10 @@ Translated Edward’s neon storyboard into scrolling world geometry. Alternating
 
 - [x] TypeScript, production build and a 101-second geometry simulation through all districts with lateral camera movement.
 - [ ] Compare shot contrast over the reactor and check frame pacing on physical iPad.
+
+## 2026-11-26 · Glass Meridian district crossings
+
+Bound architecture and facade colors to world blocks. Opened the central avenue, added ferry cabins, radial reactor braces and gate triangulation. The four terrain frames linked in the README capture the City renderer during a simulated flight.
+
+- [x] TypeScript, production build, finite projected coordinates, mixed architecture across all three boundaries, boss-practice opening.
+- [ ] Physical iPad readability and frame pacing.

@@ -79,6 +79,7 @@ Fly over a procedurally laid-out neon district. Rooftops and service streets pas
 ## Stage 1 · Glass Meridian
 
 [Stage storyboard](docs/glass-meridian.svg) · [Play the stage](https://funkatron.github.io/Shmup/) · [Practice the Super Warden](https://funkatron.github.io/Shmup/?encounter=boss)
+City blocks keep their landmarks as they scroll. At district boundaries, the next district enters from the top while the previous district passes beneath the fighter. [Four terrain frames](docs/meridian-overflight.svg)
 
 | Flight time | District | What to watch |
 |---|---|---|

@@ -202,7 +202,7 @@ class FlightScene extends Phaser.Scene {
     if (this.paused) return;
 
     const seconds = Math.min(delta, 50) / 1000;
-    this.city?.draw(seconds, this.ship.x, Math.floor((route.length * 10 - this.untilBoss) / 10));
+    this.city?.draw(seconds, this.ship.x, route.length * 10 - this.untilBoss + (this.arrival ? this.introTime - 2.6 : 0));
     this.farScroll = (this.farScroll + 18 * seconds) % 192;
     this.farBanks.forEach((bank, i) => { bank.y = i * 192 - 96 + this.farScroll; });
     this.ledgeScroll = (this.ledgeScroll + 148 * seconds) % 192;
